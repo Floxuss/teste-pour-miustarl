@@ -1,0 +1,1725 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#e3350d">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="PokéMarket">
+<title>PokéMarket — Pokémon TCG Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#f7f7f9; --surface:#fff; --text:#16181d; --muted:#6a7080; --line:#e6e8ee;
+    --accent:#4f46e5; --accent-soft:#eceafd;
+    --down:#15803d; --down-soft:#e4f5ea; --up:#c2410c; --up-soft:#fdeee4;
+    --gold:#f5b400; --shadow:0 1px 2px rgba(20,24,40,.06), 0 4px 16px rgba(20,24,40,.05);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg:#0f1115; --surface:#171a21; --text:#e9ebf0; --muted:#8b92a3; --line:#262b36;
+      --accent:#8b83ff; --accent-soft:#232044;
+      --down:#4ade80; --down-soft:#12301f; --up:#fb923c; --up-soft:#3a2312;
+      --shadow:0 1px 2px rgba(0,0,0,.4), 0 4px 16px rgba(0,0,0,.3);
+    }
+  }
+  * { box-sizing:border-box; }
+  html { -webkit-text-size-adjust:100%; }
+  body { margin:0; font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; background:var(--bg); color:var(--text); }
+  .muted { color:var(--muted); }
+  .small { font-size:.82rem; }
+
+  /* ---------- en-tête ---------- */
+  header { position:sticky; top:0; z-index:20; background:color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter:blur(10px); border-bottom:1px solid var(--line); }
+  .bar { max-width:1080px; margin:0 auto; padding:12px 20px; display:flex; align-items:center; gap:18px; flex-wrap:wrap; }
+  .brand { font-weight:700; letter-spacing:-.01em; font-size:1.05rem; display:flex; align-items:center; gap:9px; }
+  .ball { width:18px; height:18px; border-radius:50%; background:linear-gradient(#e5484d 0 46%, #20232b 46% 54%, #fff 54%); border:2px solid #20232b; position:relative; flex:none; }
+  .ball::after { content:""; position:absolute; inset:50% auto auto 50%; width:6px; height:6px; margin:-3px; border-radius:50%; background:#fff; border:2px solid #20232b; }
+  nav { display:flex; gap:4px; }
+  nav button { border:none; background:none; padding:7px 13px; border-radius:8px; color:var(--muted); font:inherit; font-weight:550; cursor:pointer; }
+  nav button:hover { color:var(--text); }
+  nav button.on { background:var(--accent-soft); color:var(--accent); }
+  .spacer { flex:1; }
+  .stats { font-size:.85rem; color:var(--muted); display:flex; gap:12px; align-items:center; }
+  .stats b { color:var(--text); font-variant-numeric:tabular-nums; }
+  .stats .sh b { color:var(--gold); }
+  .switch { display:flex; align-items:center; gap:7px; font-size:.85rem; color:var(--muted); cursor:pointer; user-select:none; }
+  .switch input { accent-color:var(--accent); }
+
+  main { max-width:1080px; margin:0 auto; padding:24px 20px 60px; }
+  h1 { font-size:1.35rem; margin:0 0 4px; letter-spacing:-.015em; }
+  .lead { margin:0 0 18px; color:var(--muted); }
+  .view { display:none; } .view.on { display:block; }
+
+  /* ---------- contrôles ---------- */
+  .tools { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:18px; }
+  input, select, button.btn { font:inherit; padding:8px 12px; border-radius:9px; border:1px solid var(--line); background:var(--surface); color:var(--text); }
+  input:focus, select:focus { outline:2px solid var(--accent-soft); border-color:var(--accent); }
+  input[type=search], input[type=text] { min-width:200px; flex:1; max-width:340px; }
+  input[type=number] { width:100px; }
+  button.btn { cursor:pointer; font-weight:550; }
+  button.btn:hover { border-color:var(--accent); }
+  button.primary { background:var(--accent); color:#fff; border-color:var(--accent); }
+  button.primary:hover { filter:brightness(1.08); }
+  button.danger { color:var(--up); }
+  button:disabled { opacity:.55; cursor:wait; }
+  .seg { display:inline-flex; border:1px solid var(--line); border-radius:9px; overflow:hidden; background:var(--surface); }
+  .seg button { border:none; background:none; padding:8px 13px; font:inherit; color:var(--muted); cursor:pointer; font-weight:550; }
+  .seg button.on { background:var(--accent-soft); color:var(--accent); }
+
+  /* ---------- cartes ---------- */
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:14px; }
+  .card { background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:14px; cursor:pointer; box-shadow:var(--shadow); transition:transform .12s, border-color .12s; display:flex; flex-direction:column; gap:10px; }
+  .card:hover { transform:translateY(-2px); border-color:var(--accent); }
+  .card .top { display:flex; gap:12px; }
+  .card img.thumb { width:66px; height:92px; object-fit:contain; border-radius:5px; flex:none; background:var(--bg); }
+  .card .name { font-weight:650; line-height:1.25; }
+  .card .price { font-size:1.15rem; font-weight:700; font-variant-numeric:tabular-nums; margin-top:4px; }
+  .badge { display:inline-block; padding:2px 8px; border-radius:99px; font-size:.78rem; font-weight:650; font-variant-numeric:tabular-nums; }
+  .badge.down { background:var(--down-soft); color:var(--down); }
+  .badge.up { background:var(--up-soft); color:var(--up); }
+  .badge.flat { background:var(--bg); color:var(--muted); border:1px solid var(--line); }
+  .badge.hit { background:var(--down-soft); color:var(--down); }
+
+  /* ---------- graphiques ---------- */
+  svg.chart { width:100%; height:auto; display:block; overflow:visible; }
+  svg.chart.down { color:var(--down); } svg.chart.up { color:var(--up); } svg.chart.flat { color:var(--muted); }
+  svg.chart .line { fill:none; stroke:currentColor; stroke-width:2; stroke-linejoin:round; stroke-linecap:round; }
+  svg.chart .area { fill:currentColor; opacity:.1; }
+  svg.chart .dot { fill:var(--surface); stroke:currentColor; stroke-width:2; }
+  svg.chart .grid { stroke:var(--line); stroke-width:1; }
+  svg.chart .ax { fill:var(--muted); font-size:11px; }
+
+  /* ---------- liste ---------- */
+  .row { display:grid; grid-template-columns:56px 1fr auto; gap:14px; align-items:center; background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:12px; margin-bottom:10px; }
+  .row img { width:56px; height:78px; object-fit:contain; background:var(--bg); border-radius:5px; }
+  .row .acts { display:flex; gap:6px; flex-wrap:wrap; align-items:center; justify-content:flex-end; }
+  .banner.warn { background:var(--up-soft); color:var(--up); line-height:1.5; }
+  .banner.warn button { margin-top:8px; }
+  .chip img.art, .pk img.art { image-rendering:auto; }
+  .chip img.art { width:36px; height:36px; object-fit:contain; }
+  .pk img.art { width:72px; height:72px; object-fit:contain; }
+  .pk small { display:block; font-size:.68rem; color:var(--muted); }
+  .favbar { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-bottom:16px; }
+  .chip { display:inline-flex; align-items:center; gap:4px; background:var(--surface); border:1px solid var(--line); border-radius:99px; padding:2px 6px 2px 4px; font-weight:550; font-size:.88rem; }
+  .chip img { width:32px; height:32px; image-rendering:pixelated; }
+  .chip button { border:none; background:none; color:var(--muted); cursor:pointer; font-size:1.05rem; line-height:1; padding:2px 4px; border-radius:50%; }
+  .chip button:hover { color:var(--up); }
+  .picker { display:grid; grid-template-columns:repeat(auto-fill,minmax(96px,1fr)); gap:8px; margin-top:12px; max-height:52vh; overflow:auto; padding:2px; }
+  .pk { border:1px solid var(--line); background:var(--bg); border-radius:12px; padding:6px 4px; text-align:center; cursor:pointer; font:inherit; color:var(--text); position:relative; }
+  .pk:hover { border-color:var(--accent); }
+  .pk.on { border-color:var(--accent); background:var(--accent-soft); }
+  .pk.on::after { content:"✓"; position:absolute; top:4px; right:7px; color:var(--accent); font-weight:700; }
+  .pk img { width:64px; height:64px; image-rendering:pixelated; }
+  .pk span { display:block; font-size:.78rem; line-height:1.2; }
+  .errbox { text-align:left; display:inline-block; margin-top:8px; font-size:.8rem; }
+  .banner { background:var(--down-soft); color:var(--down); border-radius:12px; padding:10px 14px; margin-bottom:14px; font-weight:600; }
+  .empty { text-align:center; color:var(--muted); padding:36px 10px; border:1px dashed var(--line); border-radius:14px; }
+  h2 { font-size:1.02rem; margin:26px 0 12px; }
+
+  /* ---------- fenêtre détail ---------- */
+  .overlay { position:fixed; inset:0; z-index:40; background:rgba(10,12,18,.55); display:none; align-items:flex-start; justify-content:center; padding:4vh 14px; overflow:auto; }
+  .overlay.on { display:flex; }
+  .modal { background:var(--surface); border:1px solid var(--line); border-radius:16px; width:100%; max-width:720px; padding:22px; box-shadow:0 20px 60px rgba(0,0,0,.35); }
+  .modal .head { display:flex; gap:16px; margin-bottom:16px; }
+  .modal .head img { width:110px; border-radius:7px; flex:none; }
+  .modal h3 { margin:0; font-size:1.25rem; letter-spacing:-.01em; }
+  .close { margin-left:auto; border:none; background:none; font-size:1.4rem; color:var(--muted); cursor:pointer; height:34px; width:34px; border-radius:8px; }
+  .close:hover { background:var(--bg); }
+  .kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(110px,1fr)); gap:8px; margin:10px 0 4px; }
+  .kpi { background:var(--bg); border-radius:10px; padding:8px 10px; }
+  .kpi span { display:block; font-size:.74rem; color:var(--muted); }
+  .kpi b { font-variant-numeric:tabular-nums; }
+  .box { border:1px solid var(--line); border-radius:12px; padding:12px; margin-top:14px; }
+  .box h4 { margin:0 0 6px; font-size:.9rem; }
+  .alertform { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:16px; padding-top:16px; border-top:1px solid var(--line); }
+
+  /* ---------- collection ---------- */
+  .dex { display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:10px; }
+  .mon { background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:10px 8px; text-align:center; position:relative; }
+  .mon img { width:84px; height:84px; image-rendering:pixelated; object-fit:contain; }
+  .mon .n { font-size:.84rem; font-weight:600; }
+  .mon .c { font-size:.75rem; color:var(--muted); }
+  .mon.shiny { border-color:var(--gold); box-shadow:0 0 0 1px var(--gold) inset, 0 0 16px rgba(245,180,0,.25); }
+  .mon .star { position:absolute; top:6px; right:8px; color:var(--gold); font-size:.95rem; }
+
+  /* ---------- Pokémon sauvages ---------- */
+  #wild { position:fixed; inset:0; z-index:10; pointer-events:none; overflow:hidden; }
+  .wild { position:absolute; width:84px; height:84px; padding:0; border:none; background:none; cursor:pointer; pointer-events:auto;
+          opacity:0; transition:opacity .5s, transform 11s linear; -webkit-tap-highlight-color:transparent; }
+  .wild.in { opacity:1; }
+  .wild.out { opacity:0; }
+  .wild img { width:100%; height:100%; image-rendering:pixelated; object-fit:contain; filter:drop-shadow(0 4px 3px rgba(0,0,0,.25)); animation:bob 1.1s ease-in-out infinite; }
+  .wild:hover img { filter:drop-shadow(0 4px 3px rgba(0,0,0,.25)) brightness(1.1); }
+  @keyframes bob { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-7px); } }
+  .wild.shiny img { filter:drop-shadow(0 0 7px var(--gold)) drop-shadow(0 0 14px rgba(245,180,0,.6)); }
+  .wild.shiny::before, .wild.shiny::after { content:"✦"; position:absolute; color:var(--gold); font-size:16px; animation:twinkle 1.2s ease-in-out infinite; pointer-events:none; }
+  .wild.shiny::before { top:-4px; left:2px; }
+  .wild.shiny::after { bottom:4px; right:-2px; font-size:12px; animation-delay:.5s; }
+  @keyframes twinkle { 0%,100% { opacity:.2; transform:scale(.6) rotate(0); } 50% { opacity:1; transform:scale(1.2) rotate(30deg); } }
+  .catchball { position:absolute; left:50%; top:50%; width:34px; height:34px; margin:-17px; border-radius:50%; border:3px solid #20232b;
+               background:linear-gradient(#e5484d 0 44%, #20232b 44% 56%, #fff 56%); animation:shake 1.1s ease-in-out; }
+  .catchball::after { content:""; position:absolute; left:50%; top:50%; width:10px; height:10px; margin:-5px; border-radius:50%; background:#fff; border:3px solid #20232b; }
+  @keyframes shake { 0% { transform:translateY(-30px) scale(.4); } 20% { transform:translateY(0) scale(1); } 35% { transform:rotate(-22deg); } 55% { transform:rotate(22deg); } 75% { transform:rotate(-14deg); } 100% { transform:rotate(0); } }
+  .wild.caught { transition:opacity .35s; opacity:0; }
+  .wild.caught.flash { opacity:1; }
+
+  #toasts { position:fixed; bottom:18px; left:50%; transform:translateX(-50%); z-index:60; display:flex; flex-direction:column; gap:8px; align-items:center; pointer-events:none; }
+  .toast { background:var(--text); color:var(--bg); padding:10px 16px; border-radius:11px; font-weight:550; box-shadow:0 8px 30px rgba(0,0,0,.3); animation:rise .25s ease-out; max-width:92vw; }
+  .toast.shiny { background:linear-gradient(135deg,#f5b400,#ffd966); color:#3a2a00; }
+  @keyframes rise { from { opacity:0; transform:translateY(10px); } }
+
+  @media (max-width:640px) {
+    .row { grid-template-columns:48px 1fr; } .row .acts { grid-column:1 / -1; justify-content:flex-start; }
+    .modal .head img { width:84px; }
+    .bar { gap:10px; }
+  }
+  @media (prefers-reduced-motion: reduce) { .wild img, .wild.shiny::before, .wild.shiny::after { animation:none; } }
+
+/* ---------- PokéMarket visual refresh ---------- */
+:root {
+  --bg:#f3f5fb;
+  --surface:#ffffff;
+  --text:#172033;
+  --muted:#758099;
+  --line:#e4e8f1;
+  --accent:#5265e8;
+  --accent-soft:#edf0ff;
+  --down:#168653;
+  --down-soft:#e4f7ed;
+  --up:#d66a32;
+  --up-soft:#fff0e7;
+  --gold:#f5b82e;
+  --shadow:0 8px 24px rgba(28,39,75,.055),0 2px 5px rgba(28,39,75,.035);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg:#0b1020;
+    --surface:#131b2e;
+    --text:#eef2ff;
+    --muted:#98a4bf;
+    --line:#26324b;
+    --accent:#8995ff;
+    --accent-soft:#20294c;
+    --down:#5bd69a;
+    --down-soft:#153b30;
+    --up:#ff9c68;
+    --up-soft:#422b27;
+    --shadow:0 12px 28px rgba(0,0,0,.22);
+  }
+}
+body {
+  background:
+    radial-gradient(ellipse at 8% 0%, rgba(82,101,232,.10), transparent 34rem),
+    radial-gradient(ellipse at 95% 18%, rgba(245,184,46,.08), transparent 28rem),
+    var(--bg);
+}
+header {
+  background:color-mix(in srgb,var(--surface) 82%,transparent);
+  border-bottom:1px solid color-mix(in srgb,var(--line) 82%,transparent);
+}
+.bar { max-width:1180px; min-height:70px; padding:12px 24px; gap:20px; }.brand { font-size:1.14rem; letter-spacing:-.04em; gap:10px; }
+.brand .ball { width:23px;height:23px;box-shadow:0 2px 6px rgba(0,0,0,.16); }
+.brand-accent { color:var(--accent); }
+.brand-tag {
+  font-size:.58rem; letter-spacing:.13em; font-weight:800; color:var(--muted);
+  border-left:1px solid var(--line); padding-left:10px; margin-left:2px;
+}
+nav { background:var(--bg); padding:4px; border:1px solid var(--line); border-radius:12px; }
+nav button { padding:8px 14px; border-radius:9px; font-size:.9rem; }
+nav button.on { box-shadow:0 2px 7px rgba(40,55,120,.08); }
+.stats { gap:14px; }
+.stats span { white-space:nowrap; }
+.stats b { font-size:.95rem; }
+.switch { white-space:nowrap; }
+main { max-width:1180px; padding:34px 24px 72px; }
+h1 { font-size:clamp(1.65rem,3vw,2.25rem); letter-spacing:-.045em; line-height:1.12; margin:4px 0 9px; }
+.eyebrow { color:var(--accent); font-size:.68rem; font-weight:850; letter-spacing:.16em; }
+.lead { max-width:760px; font-size:.96rem; line-height:1.65; margin-bottom:24px; }
+.tools { gap:9px; }
+input,select,button.btn { border-radius:11px; min-height:40px; }
+button.btn { transition:transform .15s,border-color .15s,box-shadow .15s,filter .15s; }
+button.btn:hover { transform:translateY(-1px); box-shadow:0 5px 12px rgba(40,55,120,.08); }
+button.primary { box-shadow:0 5px 13px rgba(82,101,232,.2); }
+.seg { padding:3px; border-radius:11px; }
+.seg button { border-radius:8px; }
+.grid { grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:16px; }
+.card {
+  border-radius:17px; padding:16px; gap:13px;
+  box-shadow:var(--shadow);
+  transition:transform .18s,border-color .18s,box-shadow .18s;
+}
+.card:hover { transform:translateY(-4px); box-shadow:0 14px 30px rgba(28,39,75,.11); }
+.card img.thumb { width:76px;height:106px;border-radius:8px;padding:3px; }
+.card .name { font-size:1rem; letter-spacing:-.015em; }
+.card .price { font-size:1.28rem; letter-spacing:-.035em; }
+.badge { padding:4px 9px; }
+.row { border-radius:15px; padding:14px; box-shadow:var(--shadow); }
+.row img { border-radius:8px; }
+.banner { border-radius:13px; }
+.empty { background:color-mix(in srgb,var(--surface) 72%,transparent); }
+.modal { border-radius:20px; padding:24px; }
+.box { border-radius:14px; }
+.kpi { border:1px solid var(--line); }
+.dex { grid-template-columns:repeat(auto-fill,minmax(132px,1fr)); gap:12px; }
+.mon { border-radius:15px; transition:transform .16s,box-shadow .16s; }
+.mon:hover { transform:translateY(-3px); box-shadow:var(--shadow); }
+.pk { border-radius:14px; }
+.pk:hover { transform:translateY(-2px); }
+.chip { box-shadow:0 2px 6px rgba(28,39,75,.04); }
+#netBanner:empty { display:none; }
+#netBanner:not(:empty) { margin-bottom:18px; }
+#trendInfo { font-variant-numeric:tabular-nums; }
+@media (max-width:820px) {
+  .bar { gap:10px; }
+  .stats { order:4; width:100%; justify-content:flex-start; padding-top:2px; }
+  nav { order:3; }
+  .spacer { display:none; }
+  #lang { margin-left:auto; }
+}
+@media (max-width:640px) {
+  .bar { padding:10px 14px; }
+  .brand-tag { display:none; }
+  nav { width:100%; order:5; }
+  nav button { flex:1; }
+  #lang { margin-left:0; }
+  .switch { font-size:.78rem; }
+  main { padding:26px 14px 52px; }
+  .grid { grid-template-columns:1fr; }
+  .card { padding:14px; }
+  .modal { padding:16px; }
+}
+
+
+/* ================= Style Pokémon 1G + thème manuel + 3D ================= */
+:root {
+  --pkred:#e3350d; --pkyellow:#ffcb05; --pkblue:#3b4cca;
+  --accent:#e3350d; --accent-soft:#fdeae2; --accent-contrast:#ffffff; --pkborder:#1d1d28;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg:#0d1022; --surface:#161a30; --text:#f2f3fb; --muted:#9aa2c5; --line:#2b3155;
+    --accent:#ffcb05; --accent-soft:#3a3210; --accent-contrast:#1d1d28; --pkborder:#31385f;
+    --down:#5bd69a; --down-soft:#14382a; --up:#ff9c68; --up-soft:#402a22;
+    --gold:#ffcb05; --shadow:0 3px 0 rgba(0,0,0,.45);
+  }
+}
+html[data-theme="light"] {
+  --bg:#f6f1df; --surface:#fffdf4; --text:#22222a; --muted:#6f7280; --line:#e0d9c2;
+  --accent:#e3350d; --accent-soft:#fdeae2; --accent-contrast:#ffffff; --pkborder:#1d1d28;
+  --down:#15803d; --down-soft:#e4f5ea; --up:#c2410c; --up-soft:#fdeee4;
+  --gold:#e8a800; --shadow:3px 3px 0 rgba(29,29,40,.16);
+}
+html[data-theme="dark"] {
+  --bg:#0d1022; --surface:#161a30; --text:#f2f3fb; --muted:#9aa2c5; --line:#2b3155;
+  --accent:#ffcb05; --accent-soft:#3a3210; --accent-contrast:#1d1d28; --pkborder:#31385f;
+  --down:#5bd69a; --down-soft:#14382a; --up:#ff9c68; --up-soft:#402a22;
+  --gold:#ffcb05; --shadow:0 3px 0 rgba(0,0,0,.45);
+}
+html[data-theme="dark"] body {
+  background:
+    radial-gradient(ellipse at 8% 0%, rgba(255,203,5,.07), transparent 34rem),
+    radial-gradient(ellipse at 95% 18%, rgba(227,53,13,.10), transparent 28rem),
+    var(--bg);
+}
+
+/* --- typo pixel 1G --- */
+h1, h2, .brand, .eyebrow, .price, nav button, .badge, .kpi b, .btn, .chip, .stats, .stats b {
+  font-family:'Press Start 2P', ui-monospace, monospace;
+}
+h1 { font-size:1.02rem; line-height:1.8; letter-spacing:0; }
+h2 { font-size:.72rem; line-height:1.8; }
+.eyebrow { font-size:.52rem; letter-spacing:.18em; }
+.brand { font-size:.78rem; }
+nav button { font-size:.56rem; padding:9px 12px; line-height:1.6; }
+.price { font-size:.82rem; }
+.badge { font-size:.5rem; padding:4px 7px; }
+.btn { font-size:.6rem; line-height:1.6; }
+.chip { font-size:.56rem; }
+.stats { font-size:.58rem; } .stats b { font-size:.6rem; }
+.brand-tag { display:none; }
+
+/* --- bordures épaisses rétro --- */
+.card, .row, .modal, .box, .banner, .empty, .pk, .mon, .chip, .seg, nav, .kpi, .chat {
+  border:2px solid var(--pkborder);
+  border-radius:8px;
+  box-shadow:3px 3px 0 rgba(15,17,32,.22);
+}
+html[data-theme="dark"] .card, html[data-theme="dark"] .row, html[data-theme="dark"] .modal,
+html[data-theme="dark"] .box, html[data-theme="dark"] .banner, html[data-theme="dark"] .empty,
+html[data-theme="dark"] .pk, html[data-theme="dark"] .mon, html[data-theme="dark"] .chip,
+html[data-theme="dark"] .seg, html[data-theme="dark"] nav, html[data-theme="dark"] .kpi,
+html[data-theme="dark"] .chat { box-shadow:3px 3px 0 rgba(0,0,0,.5); }
+input, select, button.btn { border:2px solid var(--pkborder); border-radius:8px; }
+button.primary { background:var(--accent); color:var(--accent-contrast); border-color:var(--pkborder); }
+nav button.on, .seg button.on { background:var(--accent-soft); color:var(--accent); }
+.modal .head img { border:2px solid var(--pkborder); border-radius:6px; }
+.card img.thumb { border:2px solid var(--pkborder); border-radius:6px; background:linear-gradient(160deg,#f9e9b8,#e6cf82); }
+
+/* --- cartes 3D (plus aplaties) --- */
+.thumbwrap { perspective:640px; flex:none; position:relative; display:inline-block; }
+.card img.thumb { display:block; transform-style:preserve-3d; transition:transform .12s ease-out; will-change:transform; }
+.thumbwrap::after {
+  content:""; position:absolute; inset:3px; pointer-events:none; border-radius:6px; opacity:0; transition:opacity .15s;
+  background:linear-gradient(115deg, transparent 32%, rgba(255,255,255,.55) calc(var(--sx,50%) - 12%), rgba(255,255,255,.08) calc(var(--sx,50%) + 2%), transparent 48%);
+  mix-blend-mode:screen;
+}
+.card:hover .thumbwrap::after { opacity:1; }
+
+/* --- liens d'achat --- */
+.buy { display:flex; gap:6px; flex-wrap:wrap; }
+.buy a {
+  font-size:.62rem; font-weight:700; text-decoration:none; padding:4px 9px;
+  border:2px solid var(--pkborder); border-radius:99px; background:var(--bg); color:var(--text);
+}
+.buy a:hover { background:var(--pkyellow); color:#1d1d28; }
+
+/* --- chatbot --- */
+.chat {
+  background:var(--surface); padding:14px; height:46vh; min-height:280px; overflow:auto;
+  display:flex; flex-direction:column; gap:10px;
+}
+.msg { max-width:82%; padding:10px 13px; border-radius:12px; line-height:1.6; white-space:pre-wrap; font-size:.9rem; }
+.msg.bot { background:var(--accent-soft); border:2px solid var(--pkborder); align-self:flex-start; }
+.msg.me { background:var(--accent); color:var(--accent-contrast); border:2px solid var(--pkborder); align-self:flex-end; }
+.msg.bot a { color:var(--accent); font-weight:650; }
+.msg.typing { animation:blink 1s steps(2) infinite; }
+@keyframes blink { 50% { opacity:.35; } }
+.chips { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+.chips button {
+  font:inherit; font-size:.62rem; padding:7px 11px; border-radius:99px; cursor:pointer;
+  border:2px solid var(--pkborder); background:var(--surface); color:var(--text);
+}
+.chips button:hover { background:var(--pkyellow); color:#1d1d28; }
+
+/* --- accueil --- */
+.hero {
+  border:2px solid var(--pkborder); border-radius:10px; padding:26px 24px; margin-bottom:16px;
+  background:linear-gradient(135deg, var(--pkred) 0%, #b02600 55%, #7a1a00 100%);
+  color:#fff; box-shadow:4px 4px 0 rgba(15,17,32,.25); position:relative; overflow:hidden;
+}
+.hero h2 { margin:0 0 8px; font-size:1.3rem; line-height:1.5; text-shadow:2px 2px 0 rgba(0,0,0,.35); }
+.hero p { margin:0 0 14px; max-width:640px; line-height:1.7; font-size:.85rem; opacity:.95; }
+.hero .btn { background:var(--pkyellow); color:#1d1d28; border-color:#1d1d28; margin-right:8px; }
+.hero .btn:hover { background:#ffe066; }
+.hero::after {
+  content:""; position:absolute; right:-40px; top:-40px; width:180px; height:180px; border-radius:50%;
+  background:radial-gradient(circle at 35% 35%, #fff 0 18%, var(--pkred) 19% 52%, #1d1d28 53% 100%);
+  opacity:.25; pointer-events:none;
+}
+.homeBar { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:12px; }
+
+/* --- cartes : jamais étirées, ratio réel de carte Pokémon --- */
+.card .top { align-items:center; }
+.card img.thumb { width:92px; height:auto; aspect-ratio:245/342; object-fit:cover; }
+.row img { aspect-ratio:245/342; object-fit:cover; }
+.modal .head img { aspect-ratio:245/342; object-fit:cover; }
+.grid > .card { align-self:start; }
+
+</style>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <div class="brand"><span class="ball"></span><span>Poké<span class="brand-accent">Market</span></span><span class="brand-tag">TCG TRACKER</span></div>
+    <nav id="tabs">
+      <button data-v="home" class="on">Accueil</button>
+      <button data-v="trend">Tendances</button>
+      <button data-v="list">Cartes ciblées</button>
+      <button data-v="pokemon">Pokémon appréciés</button>
+      <button data-v="ai">Chatbot IA</button>
+      <button data-v="foryou">Pour toi</button>
+      <button data-v="hunt">Offres</button>
+      <button data-v="live">En direct</button>
+      <button data-v="dex">Collection</button>
+    </nav>
+    <div class="spacer"></div>
+    <div class="stats">
+      <span>Capturés <b id="stCatch">0</b></span>
+      <span>Espèces <b id="stUniq">0</b></span>
+      <span class="sh">Shiny <b id="stShiny">0</b></span>
+    </div>
+    <button class="btn" id="themeBtn" aria-label="Changer de thème">🌗</button>
+    <select id="lang" title="Langue des noms de Pokémon">
+      <option value="fr">Français</option><option value="en">English</option><option value="de">Deutsch</option>
+      <option value="es">Español</option><option value="it">Italiano</option><option value="ja">日本語</option>
+      <option value="ko">한국어</option><option value="zh-Hans">中文</option>
+    </select>
+    <select id="srcLang" title="Langue des sources (Reddit, eBay, annonces)">
+      <option value="fr">Sources : FR</option><option value="en">Sources : EN</option>
+      <option value="de">Sources : DE</option><option value="es">Sources : ES</option>
+    </select>
+    <label class="switch"><input type="checkbox" id="wildToggle" checked> Pokémon sauvages</label>
+  </div>
+</header>
+
+<main>
+  <div id="netBanner"></div>
+  <!-- ========== Accueil ========== -->
+  <section class="view on" id="v-home">
+    <div class="hero">
+      <h2>PokéMarket — le marché Pokémon TCG en direct</h2>
+      <p>Suis les prix des cartes en temps réel, repère les baisses sur 7 jours, 1 mois ou 1 an, chasse les bonnes affaires sur eBay et Leboncoin, et demande conseil à PokéBot. Survole une carte pour la voir en 3D ✨</p>
+      <button class="btn" onclick="showView('trend')">Voir les tendances</button>
+      <button class="btn" onclick="showView('hunt')">Chasser les offres</button>
+      <button class="btn" onclick="showView('ai')">Parler à PokéBot</button>
+    </div>
+    <div class="homeBar">
+      <h2 style="margin:0;font-size:1.05rem">🔥 Les cartes les plus recherchées</h2>
+      <span class="muted small" id="homeInfo">Chargement…</span>
+      <span class="spacer"></span>
+      <button class="btn" id="btnHomeRefresh">Actualiser</button>
+    </div>
+    <div class="grid" id="homeGrid"><div class="empty" style="grid-column:1/-1">Chargement des cartes les plus recherchées… (une vingtaine de secondes au premier lancement)</div></div>
+  </section>
+  <!-- ========== Tendances ========== -->
+  <section class="view" id="v-trend">
+    <div class="eyebrow">MARCHÉ • COLLECTION • ALERTES</div><h1>Le marché Pokémon, à portée de main.</h1>
+    <p class="lead">Choisis tes Pokémon favoris : compare leurs cartes, repère les baisses et ouvre un graphique dont la couleur indique immédiatement la tendance. Survole une carte pour la voir en 3D. La vue « 1 an » s'appuie sur l'historique enregistré par l'app : elle se remplit au fil des jours.</p>
+    <div class="favbar" id="favBar"></div>
+    <div class="tools">
+      <div class="seg" id="period">
+        <button data-p="30" class="on">Sur 30 jours</button>
+        <button data-p="7">Sur 7 jours</button>
+        <button data-p="365">Sur 1 an</button>
+      </div>
+      <input type="search" id="filter" placeholder="Filtrer par nom (ex. Umbreon)">
+      <select id="minPrice" title="Prix minimum">
+        <option value="0">Tous les prix</option><option value="5">Dès 5 €</option><option value="10">Dès 10 €</option>
+        <option value="20">Dès 20 €</option><option value="50">Dès 50 €</option><option value="100">Dès 100 €</option>
+      </select>
+      <label class="switch"><input type="checkbox" id="onlyDown" checked> Baisses uniquement</label>
+      <span class="spacer"></span>
+      <span class="muted small" id="trendInfo"></span>
+      <button class="btn" id="btnRefresh">Actualiser</button>
+    </div>
+    <div class="grid" id="trendGrid"><div class="empty" style="grid-column:1/-1">Chargement des cartes populaires… (peut prendre une vingtaine de secondes)</div></div>
+  </section>
+
+  <!-- ========== Ma liste ========== -->
+  <section class="view" id="v-list">
+    <div class="eyebrow">TON RADAR PERSONNEL</div><h1>Mes cartes sélectionnées</h1>
+    <p class="lead">Ta première catégorie : ajoute manuellement les cartes que tu veux suivre, fixe un prix cible et reçois une alerte dès que le marché atteint ton seuil. Vérification toutes les heures tant que la page reste ouverte.</p>
+    <div id="alertBanner"></div>    <div class="tools">
+      <form id="searchForm" class="tools" style="margin:0;flex:1">
+        <input type="search" id="q" placeholder="Chercher une carte (nom anglais : Charizard, Pikachu…)" required>
+        <button class="btn primary" type="submit">Rechercher</button>
+      </form>
+      <button class="btn" id="btnCheck">Vérifier maintenant</button>
+      <button class="btn" id="btnNotif">Activer les notifications</button>
+    </div>
+    <div class="grid" id="searchGrid" style="margin-bottom:8px"></div>
+    <details class="muted small" style="margin:6px 0 4px">
+      <summary style="cursor:pointer">Réglages (clé API optionnelle)</summary>
+      <div class="tools" style="margin:10px 0 0">
+        <input type="text" id="apiKey" placeholder="Clé API pokemontcg.io (gratuite, facultative)">
+        <button class="btn" id="btnKey">Enregistrer</button>
+        <span>Sans clé, l'API gratuite est limitée en nombre de requêtes par jour.</span>
+      </div>
+      <div class="tools" style="margin:10px 0 0">
+        <input type="text" id="ebayKey" placeholder="App ID eBay (developer.ebay.com, gratuit)">
+        <button class="btn" id="btnEbayKey">Enregistrer</button>
+        <span>Avec une clé eBay, l'app interroge les annonces eBay à chaque vérification et calcule une vraie moyenne multi-sources (Cardmarket + TCGplayer + eBay).</span>
+      </div>
+    </details>
+    <h2>Cartes suivies</h2>
+    <div id="watchlist"></div>
+  </section>
+
+  <!-- ========== Pokémon appréciés ========== -->
+  <section class="view" id="v-pokemon">
+    <div class="eyebrow">TES GOÛTS • TES POKÉMON</div><h1>Pokémon appréciés</h1>
+    <p class="lead">Choisis les Pokémon que tu aimes. Ils servent à personnaliser les tendances et les suggestions de cartes.</p>
+    <div class="favbar" id="favBarPage"></div>
+    <div class="box"><h4>Mes Pokémon préférés</h4><div class="muted small" id="favSummary">Aucun Pokémon sélectionné pour le moment.</div></div>
+  </section>
+
+  <!-- ========== Chatbot IA ========== -->
+  <section class="view" id="v-ai">
+    <div class="eyebrow">ASSISTANT POKÉBOT</div><h1>Chatbot PokéBot</h1>
+    <p class="lead">Pose tes questions : prix d'une carte, meilleures baisses, où acheter, idées selon ton budget. Le chatbot répond avec les données de marché chargées dans l'app, et peut aussi suivre tes cartes sur eBay et TCGplayer.</p>
+    <div class="chat" id="chatLog" aria-live="polite"></div>
+    <form id="chatForm" class="tools" style="margin:12px 0 0">
+      <input type="text" id="chatInput" placeholder="Ex : « Prix de Pikachu ? », « Meilleures baisses », « Où acheter Évoli ? »" autocomplete="off" style="max-width:none">
+      <button class="btn primary" type="submit">Envoyer</button>
+    </form>
+    <div class="chips">
+      <button data-q="Quelles sont les meilleures baisses ?">Meilleures baisses</button>
+      <button data-q="Où acheter Dracaufeu ?">Où acheter ?</button>
+      <button data-q="Quel est le prix de Pikachu ?">Prix d'une carte</button>
+      <button data-q="Que acheter avec 50 € ?">Idées budget</button>
+      <button data-q="Aide">Aide</button>
+    </div>
+    <details class="muted small" style="margin-top:14px">
+      <summary style="cursor:pointer">Réglages du chatbot (IA en ligne, facultatif)</summary>
+      <div class="tools" style="margin:10px 0 0">
+        <input type="password" id="aiKey" placeholder="Clé API Mistral (facultative)">
+        <button class="btn" id="btnAiKey">Enregistrer</button>
+        <span>Sans clé, le chatbot local répond avec les données de l'app. Avec une clé Mistral (console.mistral.ai, gratuite), les réponses sont générées par une vraie IA qui reçoit les prix actuels en contexte.</span>
+      </div>
+    </details>
+  </section>
+
+  <!-- ========== Pour toi (IA perso) ========== -->
+  <section class="view" id="v-foryou">
+    <div class="eyebrow">IA PERSONNALISÉE • REDDIT • COMMUNAUTÉ</div><h1>Ce que l'IA te conseille</h1>
+    <p class="lead">PokéBrain lit les discussions Reddit récentes (retours de la communauté TCG, buzz, avis sur les cartes), les croise avec tes Pokémon favoris, ta collection et les prix du marché, puis te propose les cartes qui devraient te plaire.</p>
+    <div class="tools">
+      <button class="btn primary" id="btnSmart">Analyser Reddit + mes goûts</button>
+      <span class="muted small" id="smartInfo"></span>
+    </div>
+    <div class="grid" id="smartGrid"><div class="empty" style="grid-column:1/-1">Lance l'analyse : l'IA lit les discussions Reddit récentes et les croise avec tes goûts et les prix du marché.</div></div>
+    <h2>Buzz Reddit du moment</h2>
+    <div id="redditList"></div>
+  </section>
+
+  <!-- ========== Chasse aux offres ========== -->
+  <section class="view" id="v-hunt">
+    <div class="eyebrow">IA CHASSEUSE D'OFFRES</div><h1>Offres et ventes en ligne</h1>
+    <p class="lead">L'IA compare, pour chaque carte suivie (ou de tes tendances), les annonces eBay à la moyenne du marché et trie les meilleures affaires. Leboncoin bloque l'accès automatique depuis un navigateur : un lien de recherche direct est fourni pour chaque carte.</p>
+    <div class="tools">
+      <button class="btn primary" id="btnHunt">Chasser les offres</button>
+      <span class="muted small" id="huntInfo"></span>
+    </div>
+    <div id="huntList"></div>
+  </section>
+
+  <!-- ========== Valeur en direct ========== -->
+  <section class="view" id="v-live">
+    <div class="eyebrow">COTE EN TEMPS RÉEL</div><h1>Valeur en direct</h1>
+    <p class="lead">Courbe de valeur rafraîchie toutes les 2 secondes. Entre deux mesures réelles (toutes les 5 minutes, eBay inclus si configuré), la courbe affiche une estimation fluide autour du dernier prix mesuré.</p>
+    <div class="tools">
+      <select id="liveCard" style="min-width:260px"><option value="">— Choisir une carte —</option></select>
+      <button class="btn" id="liveSearchBtn">Chercher une autre carte</button>
+      <span class="badge flat" id="liveBadge">—</span>
+    </div>
+    <div class="box"><div id="liveChart"><div class="muted small">Choisis une carte pour démarrer la cote en direct.</div></div>
+      <div class="muted small" id="liveMeta" style="margin-top:8px"></div></div>
+  </section>
+
+  <!-- ========== Collection ========== -->
+  <section class="view" id="v-dex">
+    <div class="eyebrow">DEX PERSONNEL</div><h1>Ma collection</h1>
+    <p class="lead">Les Pokémon que tu as capturés. Chaque Pokémon sauvage a 1 chance sur 250 d'être shiny.</p>
+    <div class="dex" id="dexGrid"></div>
+  </section>
+</main>
+
+<div id="wild"></div>
+<div id="toasts"></div>
+
+<div class="overlay" id="overlay"><div class="modal" id="modal"></div></div>
+
+<script>
+/* =====================================================  Utilitaires  */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const eur = v => v == null ? '—' : Number(v).toLocaleString('fr-FR', {style:'currency', currency:'EUR'});
+const pct = v => v == null ? '—' : (v > 0 ? '+' : '') + v.toLocaleString('fr-FR', {maximumFractionDigits:1}) + ' %';
+const lsGet = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
+const norm = s => String(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+const nowStr = () => new Date().toLocaleString('fr-FR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
+
+function toast(text, cls = '', ms = 3500) {
+  const t = document.createElement('div');
+  t.className = 'toast ' + cls; t.textContent = text;
+  $('#toasts').append(t);
+  setTimeout(() => t.remove(), ms);
+}
+
+/* =====================================================  Sources de prix  (pokemontcg.io, puis TCGdex en secours)  */
+const PTCG = 'https://api.pokemontcg.io/v2';
+const TCGDEX = 'https://api.tcgdex.net/v2/en';
+const FIELDS = 'id,name,number,set,images,cardmarket,tcgplayer';
+const METRICS = {
+  lowPrice:'Prix le plus bas', trendPrice:'Prix tendance', avg30:'Moyenne 30 jours',
+  avg7:'Moyenne 7 jours', averageSellPrice:'Prix de vente moyen',
+};
+const PRICE_KEYS = ['lowPrice', 'trendPrice', 'avg1', 'avg7', 'avg30', 'averageSellPrice'];
+const ERRS = {};                         // dernière erreur de chaque source, affichée si rien ne charge
+let ptcgFails = 0, ptcgDownUntil = 0;    // si pokemontcg.io échoue 2 fois de suite, on passe 5 min sur TCGdex
+
+function limiter(n) {                    // limite le nombre de requêtes simultanées
+  let active = 0; const q = [];
+  const next = () => {
+    if (active >= n || !q.length) return;
+    active++; const { f, res, rej } = q.shift();
+    f().then(res, rej).finally(() => { active--; next(); });
+  };
+  return f => new Promise((res, rej) => { q.push({ f, res, rej }); next(); });
+}
+const limitPtcg = limiter(3), limitDex = limiter(6);
+
+async function getJSON(url, headers = {}, attempt = 0) {
+  const ctrl = new AbortController(), timer = setTimeout(() => ctrl.abort(), 30000);
+  try {
+    const r = await fetch(url, { headers, signal: ctrl.signal });
+    if (!r.ok) throw new Error('erreur ' + r.status);
+    return await r.json();
+  } catch (e) {
+    if (attempt < 1) return getJSON(url, headers, attempt + 1);
+    throw new Error(e.name === 'AbortError' ? 'délai dépassé' : e.message === 'Failed to fetch' ? 'connexion impossible' : e.message);
+  } finally { clearTimeout(timer); }
+}
+const ptcgGet = (path, params = {}) => limitPtcg(() => {
+  const u = new URL(PTCG + path);
+  Object.entries(params).forEach(([k, v]) => u.searchParams.set(k, v));
+  const key = lsGet('apiKey', '');
+  return getJSON(u.toString(), key ? { 'X-Api-Key': key } : {});
+});
+const dexGet = path => limitDex(() => getJSON(TCGDEX + path));
+
+function simplifyPtcg(c) {
+  const cm = c.cardmarket || {}, pr = cm.prices || {}, tp = (c.tcgplayer || {}).prices || {};
+  const prices = {}; PRICE_KEYS.forEach(k => prices[k] = pr[k] ?? null);
+  return { src:'ptcg', tcg_id:c.id, name:c.name, set_name:(c.set || {}).name || '', number:c.number || '',
+           image:(c.images || {}).small || '', url:cm.url || '', prices,
+           tcg:{ normal:tp.normal?.mid ?? null, holo:tp.holofoil?.mid ?? null, reverse:tp.reverseHolofoil?.mid ?? null } };
+}
+const cmUrl = (name, num) => 'https://www.cardmarket.com/fr/Pokemon/Products/Search?searchString=' + encodeURIComponent(name + ' ' + (num || ''));
+function simplifyDex(c) {
+  const cm = (c.pricing || {}).cardmarket || {};
+  return { src:'dex', tcg_id:c.id, name:c.name, set_name:(c.set || {}).name || '', number:c.localId || '',
+           image:c.image ? c.image + '/low.webp' : '', url:cmUrl(c.name, c.localId),
+           prices:{ lowPrice:cm.low ?? null, trendPrice:cm.trend ?? null, avg1:cm.avg1 ?? null,
+                    avg7:cm.avg7 ?? null, avg30:cm.avg30 ?? null, averageSellPrice:cm.avg ?? null } };
+}
+
+/* Toutes les cartes d'un Pokémon (nom anglais), avec prix */
+async function cardsByName(name) {
+  if (Date.now() >= ptcgDownUntil) {
+    try {
+      const d = await ptcgGet('/cards', { q:`name:"${name.replace(/"/g, '')}"`, pageSize:80, orderBy:'-set.releaseDate', select:FIELDS });
+      ptcgFails = 0; ERRS.ptcg = null;
+      return d.data.map(simplifyPtcg);
+    } catch (e) {
+      ERRS.ptcg = e.message;
+      if (++ptcgFails >= 2) ptcgDownUntil = Date.now() + 5 * 60 * 1000;
+    }
+  }
+  try {                                                 // secours : TCGdex (les 30 cartes les plus récentes)
+    const list = (await dexGet('/cards?name=' + encodeURIComponent(name))).slice(-30);
+    const full = await Promise.all(list.map(b => dexGet('/cards/' + encodeURIComponent(b.id)).then(simplifyDex).catch(() => null)));
+    ERRS.dex = null;
+    return full.filter(Boolean);
+  } catch (e) {
+    ERRS.dex = e.message;
+    throw new Error('aucune source ne répond');
+  }
+}
+async function fetchCard(id, src = 'ptcg') {
+  if (src === 'dex') return simplifyDex(await dexGet('/cards/' + encodeURIComponent(id)));
+  return simplifyPtcg((await ptcgGet('/cards/' + encodeURIComponent(id))).data);
+}
+async function searchCards(q) {
+  q = q.replace(/"/g, '');
+  try { return (await ptcgGet('/cards', { q:`name:"${q}*"`, pageSize:24, orderBy:'-set.releaseDate', select:FIELDS })).data.map(simplifyPtcg); }
+  catch { return (await dexGet('/cards?name=' + encodeURIComponent(q))).slice(-24).map(simplifyDex); }
+}
+
+/* =====================================================  Historique des prix (stocké dans le navigateur)  */
+let HIST = lsGet('hist', {});
+function snapshot(card) {
+  const p = card.prices; if (p.trendPrice == null) return;
+  const day = new Date().toISOString().slice(0, 10);
+  (HIST[card.tcg_id] ||= {})[day] = { t:p.trendPrice, l:p.lowPrice, a1:p.avg1, a7:p.avg7, a30:p.avg30 };
+}
+const saveHist = () => lsSet('hist', HIST);
+function histOf(id, days) {
+  let e = Object.entries(HIST[id] || {}).sort();
+  if (days) { const cut = new Date(Date.now() - days * 864e5).toISOString().slice(0, 10); e = e.filter(([d]) => d >= cut); }
+  return e.map(([d, v]) => ({ l:d.slice(5), v:v.t }));
+}
+
+/* =====================================================  Graphiques SVG  */
+function chart(points, { w = 300, h = 84, big = false } = {}) {
+  const pts = points.filter(p => p.v != null);
+  if (pts.length < 2) return '<div class="muted small">Pas encore assez de données.</div>';
+  const vs = pts.map(p => p.v);
+  let min = Math.min(...vs), max = Math.max(...vs);
+  if (min === max) { min -= 1; max += 1; }
+  const pad = (max - min) * .18; min -= pad; max += pad;
+  const L = big ? 46 : 3, R = big ? 14 : 3, T = big ? 14 : 6, B = big ? 30 : 6;
+  const X = i => L + i * (w - L - R) / (pts.length - 1);
+  const Y = v => T + (1 - (v - min) / (max - min)) * (h - T - B);
+  const line = pts.map((p, i) => (i ? 'L' : 'M') + X(i).toFixed(1) + ',' + Y(p.v).toFixed(1)).join(' ');
+  const area = line + ` L${X(pts.length - 1).toFixed(1)},${h - B} L${X(0).toFixed(1)},${h - B} Z`;
+  const delta = pts[pts.length - 1].v - pts[0].v;
+  const cls = Math.abs(delta) < 0.005 ? 'flat' : delta < 0 ? 'down' : 'up';
+  let extra = '';
+  if (big) {
+    for (let k = 0; k < 4; k++) {
+      const v = min + (max - min) * k / 3, y = Y(v).toFixed(1);
+      extra += `<line class="grid" x1="${L}" x2="${w - R}" y1="${y}" y2="${y}"/><text class="ax" x="${L - 7}" y="${+y + 4}" text-anchor="end">${Math.round(v)} €</text>`;
+    }
+    pts.forEach((p, i) => { if (pts.length <= 10 || i % Math.ceil(pts.length / 8) === 0) extra += `<text class="ax" x="${X(i).toFixed(1)}" y="${h - 9}" text-anchor="middle">${esc(p.l)}</text>`; });
+  }
+  const dots = (big || pts.length <= 6) ? pts.map((p, i) =>
+    `<circle class="dot" cx="${X(i).toFixed(1)}" cy="${Y(p.v).toFixed(1)}" r="${big ? 4 : 2.5}"><title>${esc(p.l)} : ${eur(p.v)}</title></circle>`).join('') : '';  return `<svg class="chart ${cls}" viewBox="0 0 ${w} ${h}" role="img" aria-label="Évolution du prix : ${cls === 'down' ? 'baisse' : cls === 'up' ? 'hausse' : 'stable'}">${extra}<path class="area" d="${area}"/><path class="line" d="${line}"/>${dots}</svg>`;
+}
+const avgSeries = p => [
+  { l:'Moy. 30 j', v:p.avg30 }, { l:'Moy. 7 j', v:p.avg7 }, { l:'Moy. 24 h', v:p.avg1 }, { l:'Tendance', v:p.trendPrice },
+];
+
+/* =====================================================  Navigation  */
+document.querySelectorAll('#tabs button').forEach(b => b.onclick = () => showView(b.dataset.v));
+function showView(v) {
+  document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.v === v));
+  document.querySelectorAll('.view').forEach(s => s.classList.toggle('on', s.id === 'v-' + v));
+  if (v === 'home') loadHome();
+  if (v === 'list') renderList();
+  if (v === 'pokemon') renderFavBar();
+  if (v === 'ai') { if (!TREND.length && FAVS.length) loadTrend(); if (chatLog && !chatLog.children.length) addMsg(BOT_WELCOME, 'bot'); }
+  if (v === 'live') { fillLiveSelect(); if (LIVE.card && !LIVE.timer) liveStart(LIVE.card); } else liveStop();
+  if (v === 'dex') renderDex();
+  window.scrollTo({ top: 0 });
+}
+
+/* =====================================================  Accueil : cartes les plus recherchées  */
+const HOT_NAMES = ['Charizard','Pikachu','Umbreon','Mewtwo','Eevee','Lugia','Rayquaza','Gengar','Blastoise','Venusaur','Greninja','Lucario'];
+let HOME_LOADED = false, HOME_CARDS = [];
+async function loadHome(force = false) {
+  if (HOME_LOADED && !force) return;
+  const info = $('#homeInfo'), grid = $('#homeGrid');
+  info.textContent = 'Chargement…';
+  const todo = force ? HOT_NAMES : HOT_NAMES.filter(n => !TC[n] || Date.now() - TC[n].ts > TREND_TTL);
+  await Promise.all(HOT_NAMES.map(async n => {
+    if (force || !TC[n] || Date.now() - TC[n].ts > TREND_TTL) {
+      try {
+        const cards = (await cardsByName(n)).filter(c => c.prices.trendPrice != null);
+        TC[n] = { ts:Date.now(), cards };
+      } catch (e) { if (!TC[n]) TC[n] = { ts:Date.now(), cards:[] }; }
+    }
+  }));
+  try { localStorage.setItem('trendCache2', JSON.stringify(TC)); } catch {}
+  HOME_CARDS = [];
+  for (const n of HOT_NAMES) {
+    const cards = (TC[n]?.cards || []).slice().sort((a, b) => b.prices.trendPrice - a.prices.trendPrice);
+    if (cards[0]) HOME_CARDS.push(cards[0]);
+  }
+  HOME_CARDS.sort((a, b) => b.prices.trendPrice - a.prices.trendPrice);
+  if (!HOME_CARDS.length) {
+    grid.innerHTML = '<div class="empty" style="grid-column:1/-1">Impossible de charger les cartes populaires : vérifie ta connexion puis clique sur Actualiser.</div>';
+    info.textContent = '';
+  } else {
+    grid.innerHTML = HOME_CARDS.slice(0, 12).map((c, i) => cardHtml(c, i < 3 ? '⭐ Star du moment' : 'Très recherchée')).join('');
+    bindGrid('#homeGrid', HOME_CARDS);
+    info.textContent = `${HOME_CARDS.length} cartes populaires · prix Cardmarket`;
+  }
+  HOME_LOADED = true;
+}
+$('#btnHomeRefresh').onclick = () => loadHome(true);
+
+/* =====================================================  Pokémon favoris  */
+let FAVS = lsGet('favs', []);            // [{ id, name (anglais, pour chercher les cartes), fr }]
+const saveFavs = () => lsSet('favs', FAVS);
+const SUGGEST = [[6,'Charizard','Dracaufeu'],[25,'Pikachu','Pikachu'],[133,'Eevee','Évoli'],[197,'Umbreon','Noctali'],
+                 [150,'Mewtwo','Mewtwo'],[249,'Lugia','Lugia'],[384,'Rayquaza','Rayquaza'],[94,'Gengar','Ectoplasma']];
+
+const LANG_LIST = ['fr', 'en', 'de', 'es', 'it', 'ja', 'ko', 'zh-Hans'];
+const LANG_LABEL = { fr:'Français', en:'English', de:'Deutsch', es:'Español', it:'Italiano', ja:'日本語', ko:'한국어', 'zh-Hans':'中文' };
+let LANG = lsGet('lang', 'fr');
+const ART = id => `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`;
+const IMGERR = `onerror="this.style.opacity='.15'"`;
+let ALLNAMES = null, BYID = {};
+
+/* Nom d'un Pokémon dans la langue choisie (retombe sur l'anglais) */
+function nameOf(f) {
+  const n = f.id && BYID[f.id];
+  return (n && (n[LANG] || n.en)) || f.fr || f.name;
+}
+function allNamesTitle(f) {            // survol : le nom dans toutes les langues
+  const n = f.id && BYID[f.id]; if (!n) return f.name;
+  return LANG_LIST.filter(l => n[l]).map(l => `${LANG_LABEL[l]} : ${n[l]}`).join('\n');
+}
+
+function renderFavBar() {
+  const chips = FAVS.map((f, i) => `<span class="chip" title="${esc(allNamesTitle(f))}">${f.id ? `<img class="art" src="${ART(f.id)}" alt="" ${IMGERR}>` : ''}${esc(nameOf(f))}<button aria-label="Retirer" onclick="removeFav(${i})">×</button></span>`).join('');
+  const action = `<button class="btn primary" onclick="openPicker()">${FAVS.length ? '+ Ajouter / modifier' : '+ Choisir mes Pokémon favoris'}</button>`;
+  $('#favBar').innerHTML = chips + action;
+  if ($('#favBarPage')) { $('#favBarPage').innerHTML = chips + action; $('#favSummary').textContent = FAVS.length ? FAVS.map(nameOf).join(' · ') : 'Aucun Pokémon sélectionné pour le moment.'; }
+}
+function removeFav(i) { FAVS.splice(i, 1); saveFavs(); renderFavBar(); rebuildTrend(); renderTrend(); }
+
+/* Noms de tous les Pokémon dans toutes les langues (fichiers PokeAPI sur GitHub), mis en cache */
+async function loadAllNames() {
+  if (ALLNAMES) return ALLNAMES;
+  let a = lsGet('allNames2', null);
+  if (!a || a.length < 500) {
+    const RAW = 'https://raw.githubusercontent.com/PokeAPI/pokeapi/master/data/v2/csv/';
+    try {
+      const [namesCsv, langCsv] = await Promise.all([
+        fetch(RAW + 'pokemon_species_names.csv').then(r => { if (!r.ok) throw 0; return r.text(); }),
+        fetch(RAW + 'languages.csv').then(r => r.ok ? r.text() : '').catch(() => ''),
+      ]);
+      const idToCode = { 5:'fr', 6:'de', 7:'es', 8:'it', 9:'en', 3:'ko', 11:'ja', 12:'zh-Hans' };   // valeurs par défaut
+      for (const line of langCsv.split('\n')) {              // id,iso639,iso3166,identifier,official,order
+        const p = line.split(','); if (+p[0] && LANG_LIST.includes(p[3])) idToCode[+p[0]] = p[3];
+      }
+      const m = {};
+      for (const line of namesCsv.split('\n')) {             // pokemon_species_id,local_language_id,name,genus
+        const p = line.split(','), id = +p[0], code = idToCode[+p[1]];
+        if (id && code && LANG_LIST.includes(code)) (m[id] ||= {})[code] = p[2].replace(/’/g, "'");
+      }
+      a = Object.entries(m).filter(([, v]) => v.en).map(([id, v]) => ({ id:+id, n:v }));
+    } catch {
+      const d = await (await fetch('https://pokeapi.co/api/v2/pokemon-species?limit=1025')).json();   // secours : anglais seulement
+      a = d.results.map(r => ({ id:+r.url.split('/').filter(Boolean).pop(),
+        n:{ en:r.name.split('-').map(w => w[0].toUpperCase() + w.slice(1)).join(' ') } }));
+    }
+    a.sort((x, y) => x.id - y.id); lsSet('allNames2', a);
+  }
+  a.forEach(p => BYID[p.id] = p.n);
+  return ALLNAMES = a;
+}
+
+let pickerDirty = false;
+async function openPicker() {
+  overlay.classList.add('on'); document.body.style.overflow = 'hidden'; pickerDirty = false;
+  $('#modal').innerHTML = `
+    <div class="head" style="margin-bottom:6px"><div style="flex:1"><h3>Mes Pokémon favoris</h3>
+      <div class="muted small">Clique sur un Pokémon pour l'ajouter ou le retirer. La recherche marche dans toutes les langues (Dracaufeu, Charizard, リザードン…). Change la langue d'affichage en haut de la page.</div></div>
+      <button class="close" aria-label="Fermer" onclick="closeModal()">×</button></div>
+    <div class="tools" style="margin:0"><input type="search" id="pkSearch" placeholder="Rechercher un Pokémon…" autocomplete="off">
+      <button class="btn primary" onclick="closeModal()">Terminé</button></div>
+    <div class="picker" id="pkGrid"><div class="empty" style="grid-column:1/-1">Chargement de la liste…</div></div>`;
+  let all = [], failed = false;
+  try { all = await loadAllNames(); } catch { failed = true; }
+  const draw = () => {
+    const raw = $('#pkSearch').value.trim(), q = norm(raw);
+    const list = (q ? all.filter(p => Object.values(p.n).some(v => norm(v).includes(q)) || String(p.id) === q) : all).slice(0, 120);
+    const isFav = p => FAVS.some(f => f.name === p.n.en);
+    let html = list.map(p => `<button class="pk ${isFav(p) ? 'on' : ''}" data-id="${p.id}" title="${esc(allNamesTitle({ id:p.id, name:p.n.en }))}">
+        <img class="art" loading="lazy" src="${ART(p.id)}" alt="" ${IMGERR}><span>${esc(p.n[LANG] || p.n.en)}</span>${LANG !== 'en' ? `<small>${esc(p.n.en)}</small>` : ''}</button>`).join('');
+    if (failed) html = `<div class="empty" style="grid-column:1/-1">Impossible de charger la liste des Pokémon (pas d'accès à internet).<br>Tu peux quand même taper un nom anglais puis l'ajouter ci-dessous.</div>`;
+    else if (q && !list.length) html = `<div class="empty" style="grid-column:1/-1">Aucun Pokémon trouvé.</div>`;
+    if (raw) html += `<button class="pk" data-custom="1"><span style="padding:22px 0">Ajouter « ${esc(raw)} » tel quel</span></button>`;
+    $('#pkGrid').innerHTML = html;
+    $('#pkGrid').querySelectorAll('.pk').forEach(b => b.onclick = () => {
+      pickerDirty = true;
+      if (b.dataset.custom) {
+        const n = $('#pkSearch').value.trim();
+        if (!FAVS.some(f => norm(f.name) === norm(n))) FAVS.push({ id:null, name:n, fr:n });
+      } else {
+        const p = all.find(x => x.id === +b.dataset.id), i = FAVS.findIndex(f => f.name === p.n.en);
+        if (i >= 0) FAVS.splice(i, 1); else FAVS.push({ id:p.id, name:p.n.en, fr:p.n.fr || p.n.en });
+        b.classList.toggle('on');
+      }
+      saveFavs(); renderFavBar();
+      if (b.dataset.custom) draw();
+    });
+  };
+  $('#pkSearch').oninput = draw; draw(); $('#pkSearch').focus();
+  window.redrawPicker = draw;
+}
+
+/* =====================================================  Tendances  */
+let TREND = [], PERIOD = 30;
+let TC = lsGet('trendCache2', {});       // cache par Pokémon : { nom: { ts, cards } }
+const TREND_TTL = 60 * 60 * 1000;        // 1 h
+document.querySelectorAll('#period button').forEach(b => b.onclick = () => {
+  PERIOD = +b.dataset.p;
+  document.querySelectorAll('#period button').forEach(x => x.classList.toggle('on', x === b));
+  renderTrend();
+});
+$('#filter').oninput = renderTrend;
+$('#onlyDown').onchange = renderTrend;
+$('#minPrice').value = lsGet('minPrice', 5);
+$('#minPrice').onchange = () => { lsSet('minPrice', +$('#minPrice').value); renderTrend(); };
+
+const escRe = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+function rebuildTrend() {
+  const seen = new Map();
+  for (const f of FAVS) {
+    const entry = TC[f.name]; if (!entry) continue;
+    const re = new RegExp('(^|[^a-z])' + escRe(norm(f.name)) + '([^a-z]|$)');
+    for (const c of entry.cards) if (re.test(norm(c.name))) seen.set(c.tcg_id, { ...c, fav:f.name });
+  }
+  TREND = [];
+  for (const c of seen.values()) {
+    const { trendPrice:t, avg7:a7, avg30:a30 } = c.prices;
+    if (!t) continue;
+    c.drop30 = a30 ? Math.round((t - a30) / a30 * 1000) / 10 : null;
+    c.drop7 = a7 ? Math.round((t - a7) / a7 * 1000) / 10 : null;
+    const h = histOf(c.tcg_id, 365);
+    c.drop365 = h.length >= 2 && h[0].v > 0 ? Math.round((h[h.length - 1].v - h[0].v) / h[0].v * 1000) / 10 : null;
+    TREND.push(c);
+  }
+}
+let loadingTrend = false;
+async function loadTrend(force = false) {
+  renderFavBar();
+  if (!FAVS.length) { rebuildTrend(); renderTrend(); return; }
+  if (loadingTrend) return; loadingTrend = true;
+  const btn = $('#btnRefresh'); btn.disabled = true;
+  const todo = FAVS.filter(f => force || !TC[f.name] || Date.now() - TC[f.name].ts > TREND_TTL);
+  const failed = []; let done = 0;
+  rebuildTrend(); renderTrend(todo.length);
+  await Promise.all(todo.map(async f => {
+    try {
+      const cards = (await cardsByName(f.name)).filter(c => c.prices.trendPrice != null);
+      TC[f.name] = { ts:Date.now(), cards };
+    } catch (e) { failed.push(f.fr || f.name); }
+    done++; $('#trendInfo').textContent = `Chargement ${done}/${todo.length}…`;
+    rebuildTrend(); renderTrend(todo.length - done);
+  }));
+  try { localStorage.setItem('trendCache2', JSON.stringify(TC)); } catch { TC = {}; }   // quota plein : on repart à zéro
+  [...TREND].sort((a, b) => (a.drop30 ?? 0) - (b.drop30 ?? 0)).slice(0, 40).forEach(snapshot); saveHist();
+  $('#trendInfo').textContent = failed.length ? `Échec pour : ${failed.join(', ')}` : 'Mis à jour à ' + new Date().toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
+  if (!TREND.length && failed.length) renderTrend(0, true);
+  loadingTrend = false; btn.disabled = false;
+}
+$('#btnRefresh').onclick = () => loadTrend(true);
+
+function renderTrend(pending = 0, failedAll = false) {
+  const grid = $('#trendGrid');
+  if (!FAVS.length) {
+    grid.innerHTML = `<div class="empty" style="grid-column:1/-1">Tu n'as pas encore choisi de Pokémon favoris.<br><br>
+      <button class="btn primary" onclick="openPicker()">Choisir mes Pokémon favoris</button>
+      <button class="btn" onclick="useSuggestion()">Utiliser une sélection populaire</button></div>`;
+    return;
+  }
+  if (failedAll) {
+    const det = Object.entries(ERRS).filter(([, v]) => v).map(([k, v]) => `${k === 'ptcg' ? 'pokemontcg.io' : 'TCGdex'} : ${esc(v)}`).join('<br>');
+    grid.innerHTML = `<div class="empty" style="grid-column:1/-1">Impossible de charger les prix pour le moment.<br>
+      <span class="errbox">${det || 'Aucune réponse reçue des sources de prix.'}</span><br><span class="small">Vérifie ta connexion, puis clique sur Actualiser. Si le problème continue, désactive ton bloqueur de pub pour ce fichier.</span></div>`;
+    return;
+  }
+  const key = PERIOD === 7 ? 'drop7' : PERIOD === 365 ? 'drop365' : 'drop30';
+  const f = norm($('#filter').value.trim()), min = +$('#minPrice').value;
+  let list = TREND.filter(c => (!f || norm(c.name).includes(f)) && c.prices.trendPrice >= min);
+  if ($('#onlyDown').checked) list = list.filter(c => c[key] != null && c[key] < -1);
+  list.sort((a, b) => (a[key] ?? 0) - (b[key] ?? 0));
+  list = list.slice(0, 60);
+  if (!list.length) {
+    grid.innerHTML = `<div class="empty" style="grid-column:1/-1">${pending ? 'Chargement des cartes…' : 'Aucune carte en baisse pour ces critères. Essaie « Tous les prix » ou décoche « Baisses uniquement ».'}</div>`;
+    return;
+  }
+  grid.innerHTML = list.map(c => {
+    const d = c[key], cls = d == null ? 'flat' : d < -1 ? 'down' : d > 1 ? 'up' : 'flat';
+    const plabel = PERIOD === 365 ? '1 an' : PERIOD + ' j';
+    return `<div class="card" data-id="${esc(c.tcg_id)}">
+      <div class="top"><span class="thumbwrap"><img class="thumb" loading="lazy" src="${esc(c.image)}" alt=""></span>
+        <div><div class="name">${esc(c.name)}</div><div class="muted small">${esc(c.set_name)} · #${esc(c.number)}</div>
+        <div class="price">${eur(c.prices.trendPrice)}</div>        <span class="badge ${cls}">${pct(d)} / ${plabel}</span></div></div>
+      ${chart(PERIOD === 365 ? histOf(c.tcg_id, 365) : avgSeries(c.prices))}
+      <div class="buy">${buyLinksHtml(c)}</div>
+    </div>`;
+  }).join('');
+  grid.querySelectorAll('.card').forEach(el => el.onclick = () => openCard(el.dataset.id, TREND.find(c => c.tcg_id === el.dataset.id)));
+  attachTilt(grid);
+}
+function useSuggestion() {
+  FAVS = SUGGEST.map(([id, name, fr]) => ({ id, name, fr })); saveFavs(); renderFavBar(); loadTrend();
+}
+
+/* =====================================================  Fenêtre détail  */
+const overlay = $('#overlay');
+overlay.onclick = e => { if (e.target === overlay) closeModal(); };
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+function closeModal() {
+  overlay.classList.remove('on'); document.body.style.overflow = '';
+  if (pickerDirty) { pickerDirty = false; loadTrend(); }
+}
+
+async function openCard(id, known, src) {
+  overlay.classList.add('on'); document.body.style.overflow = 'hidden';
+  src = src || (known && known.src) || 'ptcg';
+  if (known) renderModal(known); else $('#modal').innerHTML = '<div class="empty">Chargement…</div>';
+  try { const c = await fetchCard(id, src); snapshot(c); saveHist(); renderModal(c); }
+  catch (e) { if (!known) $('#modal').innerHTML = `<div class="empty">Erreur : ${esc(e.message)}</div>`; }
+}
+
+let modalCard = null, HISTP = 30;
+function renderModal(c) {
+  modalCard = c;
+  const p = c.prices;
+  const eb = latestEbay(c.tcg_id);
+  const h365 = histOf(c.tcg_id, 365);
+  const avg365 = h365.length > 1 ? +(h365.reduce((a, x) => a + x.v, 0) / h365.length).toFixed(2) : null;
+  const kpis = [['Prix le plus bas', p.lowPrice], ['Tendance', p.trendPrice], ['Moy. 24 h', p.avg1], ['Moy. 7 j', p.avg7], ['Moy. 30 j', p.avg30], ['Moy. 1 an (local)', avg365], ['eBay (médiane)', eb], ['Multi-sources', realAvg(c)]]
+    .map(([l, v]) => `<div class="kpi"><span>${l}</span><b>${eur(v)}</b></div>`).join('');
+  const hist = histOf(c.tcg_id, HISTP);
+  const histSeg = `<div class="seg" style="margin-top:10px">${[[7,'7 jours'],[30,'1 mois'],[365,'1 an']].map(([d, l]) => `<button data-h="${d}" class="${HISTP === d ? 'on' : ''}">${l}</button>`).join('')}</div>`;
+  const histBox = hist.length >= 3
+    ? `<div class="box"><h4>Historique enregistré par l'app</h4>${chart(hist, { w:640, h:220, big:true })}${histSeg}</div>`
+    : `<div class="box"><h4>Historique enregistré par l'app</h4><div class="muted small">L'app enregistre un point de prix par jour quand tu ouvres cette carte ou qu'elle est dans ta liste. Le graphique apparaîtra après quelques jours (${hist.length} point${hist.length > 1 ? 's' : ''} pour l'instant).</div></div>`;
+  const sources = ['Cardmarket'] + (c.tcg && (c.tcg.normal || c.tcg.holo) ? ' + TCGplayer' : '') + (eb ? ' + eBay' : '');
+  const suggest = p.trendPrice ? (p.trendPrice * 0.9).toFixed(2) : '';
+  const opts = Object.entries(METRICS).map(([k, v]) => `<option value="${k}" ${k === 'trendPrice' ? 'selected' : ''}>${esc(v)}</option>`).join('');
+  const followed = WATCH.find(w => w.tcg_id === c.tcg_id);
+  $('#modal').innerHTML = `
+    <div class="head">
+      <img src="${esc(c.image)}" alt="">
+      <div style="flex:1"><h3>${esc(c.name)}</h3><div class="muted">${esc(c.set_name)} · #${esc(c.number)}</div>
+        <div class="kpis">${kpis}</div></div>
+      <button class="close" aria-label="Fermer" onclick="closeModal()">×</button>
+    </div>
+    <div class="box"><h4>Évolution des moyennes Cardmarket</h4>${chart(avgSeries(p), { w:640, h:220, big:true })}</div>
+    ${histBox}
+    <div class="box"><h4>Où acheter cette carte</h4>
+      <div class="buy">${buyLinksHtml(c)}</div>
+      <div class="muted small" style="margin-top:8px">Vraie moyenne multi-sources (${sources}) : <b>${eur(realAvg(c))}</b>.
+      ${EBAY_KEY ? (eb ? 'Dernière médiane eBay : ' + eur(eb.median) + ' (' + eb.count + ' annonces).' : 'Pas encore de données eBay pour cette carte : elle sera mesurée à la prochaine vérification.') : 'Ajoute ton App ID eBay gratuit (onglet Cartes ciblées → Réglages) pour suivre aussi les prix eBay.'}</div>
+    </div>
+    <div class="alertform">
+      <span style="font-weight:600">M'alerter sous</span>
+      <input type="number" id="mTarget" step="0.01" min="0" value="${followed ? followed.target : suggest}" placeholder="€">
+      <select id="mMetric">${opts}</select>
+      <button class="btn primary" id="mFollow">${followed ? 'Mettre à jour' : 'Suivre cette carte'}</button>
+      ${c.url ? `<a class="small" style="margin-left:auto;color:var(--accent)" href="${esc(c.url)}" target="_blank" rel="noopener">Voir sur Cardmarket ↗</a>` : ''}
+    </div>`;
+  if (followed) $('#mMetric').value = followed.metric;
+  $('#modal').querySelectorAll('[data-h]').forEach(b => b.onclick = () => { HISTP = +b.dataset.h; if (modalCard) renderModal(modalCard); });
+  $('#mFollow').onclick = () => {
+    const target = parseFloat($('#mTarget').value);
+    if (!(target > 0)) return toast('Indique un seuil en euros.');
+    const metric = $('#mMetric').value;
+    const price = c.prices[metric];
+    const w = WATCH.find(x => x.tcg_id === c.tcg_id);
+    if (w) Object.assign(w, { target, metric, last:price, alerted:false });
+    else WATCH.push({ src:c.src, tcg_id:c.tcg_id, name:c.name, set_name:c.set_name, number:c.number, image:c.image, url:c.url,
+                      metric, target, last:price, checked:nowStr(), alerted:false });
+    saveWatch(); snapshot(c); saveHist();
+    toast(c.name + ' ajoutée à ta liste'); closeModal(); evaluate();
+  };
+}
+
+/* =====================================================  Ma liste + alertes  */
+let WATCH = lsGet('watch', []);
+const saveWatch = () => lsSet('watch', WATCH);
+
+$('#searchForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const box = $('#searchGrid');
+  box.innerHTML = '<div class="empty" style="grid-column:1/-1">Recherche…</div>';
+  try {
+    const res = await searchCards($('#q').value);
+    if (!res.length) { box.innerHTML = '<div class="empty" style="grid-column:1/-1">Aucun résultat.</div>'; return; }
+    box.innerHTML = res.map(c => `<div class="card" data-id="${esc(c.tcg_id)}">
+      <div class="top"><span class="thumbwrap"><img class="thumb" loading="lazy" src="${esc(c.image)}" alt=""></span>
+      <div><div class="name">${esc(c.name)}</div><div class="muted small">${esc(c.set_name)} · #${esc(c.number)}</div>
+      <div class="price">${eur(c.prices.trendPrice)}</div></div></div>
+      <div class="buy">${buyLinksHtml(c)}</div></div>`).join('');
+    box.querySelectorAll('.card').forEach(el => el.onclick = () => openCard(el.dataset.id, res.find(c => c.tcg_id === el.dataset.id)));
+    attachTilt(box);
+  } catch (err) { box.innerHTML = `<div class="empty" style="grid-column:1/-1">Erreur : ${esc(err.message)}</div>`; }
+});
+
+function renderList() {
+  const box = $('#watchlist');
+  const hits = WATCH.filter(w => w.last != null && w.last <= w.target);
+  $('#alertBanner').innerHTML = hits.length
+    ? `<div class="banner">Seuil atteint : ${hits.map(w => esc(w.name) + ' (' + eur(w.last) + ')').join(' · ')}</div>` : '';
+  if (!WATCH.length) { box.innerHTML = '<div class="empty">Aucune carte suivie. Cherche une carte ci-dessus ou ouvre-en une depuis les tendances.</div>'; return; }
+  const opts = sel => Object.entries(METRICS).map(([k, v]) => `<option value="${k}" ${k === sel ? 'selected' : ''}>${esc(v)}</option>`).join('');
+  box.innerHTML = WATCH.map((r, i) => {
+    const hit = r.last != null && r.last <= r.target;
+    return `<div class="row">
+      <img src="${esc(r.image)}" alt="">
+      <div><div class="name" style="font-weight:650">${esc(r.name)} <span class="muted small">${esc(r.set_name)} · #${esc(r.number)}</span></div>
+        <div><b style="font-variant-numeric:tabular-nums">${eur(r.last)}</b> <span class="muted small">· seuil ${eur(r.target)}</span>${r.ebay ? ` <span class="muted small">· eBay ${eur(r.ebay.median)}</span>` : ''}
+          <span class="badge ${hit ? 'hit' : 'flat'}">${hit ? 'Seuil atteint' : 'En attente'}</span></div>
+        <div class="muted small">${esc(METRICS[r.metric])} · vérifié : ${esc(r.checked || '—')}</div></div>
+      <div class="acts">
+        <input type="number" step="0.01" min="0" value="${r.target}" id="e${i}" title="Seuil (€)">
+        <select id="em${i}">${opts(r.metric)}</select>
+        <button class="btn" onclick="updateWatch(${i})">Enregistrer</button>
+        <button class="btn" onclick="openCard('${esc(r.tcg_id)}', null, '${esc(r.src || 'ptcg')}')">Graphique</button>
+        <button class="btn danger" onclick="removeWatch(${i})">Supprimer</button>
+      </div></div>`;
+  }).join('');
+}
+function updateWatch(i) {
+  const t = parseFloat($('#e' + i).value);
+  if (!(t > 0)) return toast('Indique un seuil en euros.');
+  Object.assign(WATCH[i], { target:t, metric:$('#em' + i).value, alerted:false });
+  saveWatch(); toast('Seuil mis à jour'); checkAll();
+}
+function removeWatch(i) {
+  if (!confirm('Retirer cette carte de la liste ?')) return;
+  WATCH.splice(i, 1); saveWatch(); renderList();
+}
+
+/* ---- alertes ---- */
+function fireAlert(w) {
+  toast(`${w.name} : ${eur(w.last)} (seuil ${eur(w.target)})`, 'shiny', 9000);
+  try {
+    if ('Notification' in window && Notification.permission === 'granted')
+      new Notification('Prix atteint : ' + w.name, { body:`${METRICS[w.metric]} : ${eur(w.last)} (seuil ${eur(w.target)})`, icon:w.image });
+  } catch {}
+}
+function evaluate() {                       // compare les prix connus aux seuils
+  let n = 0;
+  for (const w of WATCH) {
+    if (w.last == null) continue;
+    if (w.last <= w.target) { if (!w.alerted) { w.alerted = true; fireAlert(w); } n++; }
+    else w.alerted = false;                 // le prix remonte : l'alerte se réarme
+  }
+  saveWatch(); updateTitle(n);
+  if ($('#v-list').classList.contains('on')) renderList();
+}
+function updateTitle(n) { document.title = (n ? `(${n}) ` : '') + 'PokéMarket'; }
+
+let checking = false;
+async function checkAll(manual = false) {
+  if (checking) return; checking = true;
+  let ok = 0, ebok = 0, err = null, ebayErr = null;
+  for (const w of WATCH) {
+    try {
+      const c = await fetchCard(w.tcg_id, w.src || 'ptcg');
+      w.last = c.prices[w.metric]; w.checked = nowStr(); w.url = c.url || w.url;
+      if (c.tcg) w.tcg = c.tcg;
+      snapshot(c); ok++;
+    } catch (e) { err = e.message; }
+    if (EBAY_KEY) {
+      try {
+        const e = await ebayAvg(w.name, w.number);
+        if (e) { ebok++; w.ebay = e; w.ebayAt = nowStr();
+          (EBAY_HIST[w.tcg_id] ||= {})[new Date().toISOString().slice(0, 10)] = e.median; }
+      } catch (e2) { ebayErr = e2.message; }
+    }
+  }
+  saveHist(); lsSet('ebayHist', EBAY_HIST); lsSet('lastCheck', Date.now()); evaluate();
+  checking = false;
+  if (manual) toast(`${ok} carte(s) vérifiée(s)` + (ebok ? ` · ${ebok} mesurée(s) sur eBay` : '') + (err ? ' — ' + err : '') + (ebayErr ? ' · eBay : ' + ebayErr : ''), '', 6000);
+}
+$('#btnCheck').onclick = async e => { e.target.disabled = true; await checkAll(true); e.target.disabled = false; };
+
+$('#btnNotif').onclick = async () => {
+  if (!('Notification' in window)) return toast('Ton navigateur ne gère pas les notifications.');
+  const r = await Notification.requestPermission();
+  toast(r === 'granted' ? 'Notifications activées' : 'Notifications refusées : tu verras quand même les alertes dans la page', '', 5000);
+};
+$('#apiKey').value = lsGet('apiKey', '');
+$('#btnKey').onclick = () => { lsSet('apiKey', $('#apiKey').value.trim()); toast('Clé enregistrée'); };
+$('#ebayKey').value = lsGet('ebayKey', '');
+$('#btnEbayKey').onclick = () => { EBAY_KEY = $('#ebayKey').value.trim(); lsSet('ebayKey', EBAY_KEY); toast(EBAY_KEY ? 'Suivi eBay activé' : 'Suivi eBay désactivé'); if (WATCH.length) checkAll(true); };
+
+/* =====================================================  Pokémon : collection  */
+const MAX_ID = 905;            // Pokémon de la génération 1 à 8
+const SHINY_ODDS = 250;        // 1 chance sur 250
+const SPRITE = (id, shiny) => `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${shiny ? 'shiny/' : ''}${id}.png`;
+let DEX = lsGet('dex', {});    // { id: { n:captures, s:captures shiny } }
+let NAMES = lsGet('names', {});
+
+async function pokeName(id) {
+  if (NAMES[id]) return NAMES[id];
+  try {
+    const r = await fetch(`https://pokeapi.co/api/v2/pokemon-species/${id}`);
+    const d = await r.json();
+    const fr = (d.names.find(n => n.language.name === 'fr') || d.names.find(n => n.language.name === 'en')).name;
+    NAMES[id] = fr; lsSet('names', NAMES); return fr;
+  } catch { return '#' + id; }
+}
+function updateStats() {
+  const ids = Object.keys(DEX);
+  $('#stCatch').textContent = ids.reduce((a, i) => a + DEX[i].n + DEX[i].s, 0);
+  $('#stUniq').textContent = ids.length;
+  $('#stShiny').textContent = ids.reduce((a, i) => a + DEX[i].s, 0);
+}
+async function renderDex() {
+  const ids = Object.keys(DEX).map(Number).sort((a, b) => a - b);
+  const box = $('#dexGrid');
+  if (!ids.length) { box.innerHTML = '<div class="empty" style="grid-column:1/-1">Aucun Pokémon capturé pour l\'instant. Clique sur ceux qui se baladent sur la page !</div>'; return; }
+  box.innerHTML = ids.map(id => {
+    const d = DEX[id], shiny = d.s > 0;
+    return `<div class="mon ${shiny ? 'shiny' : ''}">${shiny ? '<span class="star">✦</span>' : ''}
+      <img loading="lazy" src="${SPRITE(id, shiny && d.n === 0)}" alt=""><div class="n" data-name="${id}">${esc(NAMES[id] || '#' + id)}</div>
+      <div class="c">N°${id} · ×${d.n + d.s}${shiny ? ' · ' + d.s + ' shiny' : ''}</div></div>`;
+  }).join('');
+  for (const id of ids) if (!NAMES[id]) pokeName(id).then(n => { const el = box.querySelector(`[data-name="${id}"]`); if (el) el.textContent = n; });
+}
+
+/* =====================================================  Pokémon sauvages  */
+const wildLayer = $('#wild');
+let wildOn = lsGet('wildOn', true), spawnTimer = null;
+$('#wildToggle').checked = wildOn;
+$('#wildToggle').onchange = e => {
+  wildOn = e.target.checked; lsSet('wildOn', wildOn);
+  if (wildOn) scheduleSpawn(1500); else { clearTimeout(spawnTimer); wildLayer.innerHTML = ''; }
+};
+
+function scheduleSpawn(delay) {
+  clearTimeout(spawnTimer);
+  spawnTimer = setTimeout(() => {
+    if (wildOn && !document.hidden && wildLayer.children.length < 3) spawnWild();
+    if (wildOn) scheduleSpawn(6000 + Math.random() * 9000);
+  }, delay);
+}
+
+function spawnWild() {
+  const id = 1 + Math.floor(Math.random() * MAX_ID);
+  const shiny = Math.random() < 1 / SHINY_ODDS;
+  const el = document.createElement('button');
+  el.className = 'wild' + (shiny ? ' shiny' : '');
+  el.setAttribute('aria-label', 'Pokémon sauvage, clique pour capturer');
+  const w = innerWidth, h = innerHeight;
+  el.style.left = (30 + Math.random() * Math.max(40, w - 150)) + 'px';
+  el.style.top = (80 + Math.random() * Math.max(40, h - 220)) + 'px';  const img = new Image(); img.alt = ''; img.draggable = false; img.src = SPRITE(id, shiny);
+  img.onerror = () => el.remove();
+  el.append(img); wildLayer.append(el);
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    el.classList.add('in');
+    el.style.transform = `translate(${(Math.random() - .5) * 320}px, ${(Math.random() - .5) * 180}px)`;
+  }));
+  const leave = setTimeout(() => { el.classList.remove('in'); el.classList.add('out'); setTimeout(() => el.remove(), 600); }, 11000);
+  el.onclick = () => capture(el, id, shiny, leave);
+}
+
+async function capture(el, id, shiny, leaveTimer) {
+  clearTimeout(leaveTimer);
+  el.onclick = null; el.disabled = true;
+  el.style.transition = 'none';
+  el.style.transform = getComputedStyle(el).transform;       // on fige le Pokémon sur place
+  el.innerHTML = '<span class="catchball"></span>';
+  await new Promise(r => setTimeout(r, 1150));
+  const d = DEX[id] || (DEX[id] = { n:0, s:0 });
+  const isNew = d.n + d.s === 0;
+  if (shiny) d.s++; else d.n++;
+  lsSet('dex', DEX); updateStats();
+  el.style.transition = 'opacity .35s'; el.classList.remove('in'); setTimeout(() => el.remove(), 400);
+  const name = await pokeName(id);
+  if (shiny) toast(`✨ ${name} shiny capturé !`, 'shiny', 5000);
+  else toast(`${name} capturé !` + (isNew ? ' (nouveau)' : ''));
+  if ($('#v-dex').classList.contains('on')) renderDex();
+}
+
+/* =====================================================  Thème (auto / clair / sombre)  */
+let THEME = lsGet('theme', 'auto');
+const THEME_ICON = { auto:'🌗', light:'☀️', dark:'🌙' };
+function applyTheme() {
+  const root = document.documentElement;
+  if (THEME === 'auto') root.removeAttribute('data-theme'); else root.dataset.theme = THEME;
+  const b = $('#themeBtn');
+  if (b) b.title = 'Thème : ' + { auto:'automatique', light:'clair', dark:'sombre' }[THEME] + ' (cliquer pour changer)';
+  const btn = $('#themeBtn'); if (btn) btn.textContent = THEME_ICON[THEME];
+}
+$('#themeBtn').onclick = () => { THEME = { auto:'light', light:'dark', dark:'auto' }[THEME]; lsSet('theme', THEME); applyTheme(); };
+applyTheme();
+
+/* =====================================================  Cartes en 3D (effet holographique)  */
+function attachTilt(root) {
+  (root || document).querySelectorAll('.card .thumbwrap').forEach(wrap => {
+    if (wrap.dataset.tilt) return; wrap.dataset.tilt = '1';
+    const img = wrap.querySelector('img'), card = wrap.closest('.card');
+    if (!img || !card) return;
+    card.addEventListener('mousemove', e => {
+      const r = card.getBoundingClientRect();
+      const x = (e.clientX - r.left) / r.width - .5, y = (e.clientY - r.top) / r.height - .5;
+      img.style.transform = `rotateY(${(x * 22).toFixed(1)}deg) rotateX(${(-y * 16).toFixed(1)}deg)`;
+      wrap.style.setProperty('--sx', (x * 100 + 50).toFixed(0) + '%');
+      wrap.style.setProperty('--sy', (y * 100 + 50).toFixed(0) + '%');
+    });
+    card.addEventListener('mouseleave', () => { img.style.transform = ''; });
+  });
+}
+
+/* =====================================================  Langue des sources  */
+let SRC_LANG = lsGet('srcLang', 'fr');
+$('#srcLang').value = SRC_LANG;
+$('#srcLang').onchange = () => { SRC_LANG = $('#srcLang').value; lsSet('srcLang', SRC_LANG); toast('Sources : ' + SRC_LANG.toUpperCase()); };
+
+/* =====================================================  Liens d'achat  */
+const EBAY_SITE = { fr:'ebay.fr', en:'ebay.com', de:'ebay.de', es:'ebay.es' };
+const ebayUrl = (name, number) => 'https://www.' + (EBAY_SITE[SRC_LANG] || 'ebay.fr') + '/sch/i.html?_nkw=' + encodeURIComponent('pokemon ' + name + ' ' + (number || ''));
+const lbcUrl = (name, number) => 'https://www.leboncoin.fr/recherche?text=' + encodeURIComponent('pokemon carte ' + name + ' ' + (number || ''));
+function buyLinksHtml(c) {
+  const q = encodeURIComponent(c.name + (c.number ? ' ' + c.number : ''));
+  return [
+    ['Cardmarket', c.url || ('https://www.cardmarket.com/fr/Pokemon/Products/Search?searchString=' + q)],
+    ['eBay', ebayUrl(c.name, c.number)],
+    ['TCGplayer', 'https://www.tcgplayer.com/search/pokemon/product?q=' + encodeURIComponent(c.name)],
+  ].map(([l, u]) => `<a href="${u}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${l} ↗</a>`).join('');
+}
+
+/* =====================================================  Suivi eBay (Finding API, JSONP)  */
+let EBAY_KEY = lsGet('ebayKey', ''), EBAY_HIST = lsGet('ebayHist', {}), ebayN = 0;
+function ebayFind(keywords) {
+  return new Promise((res, rej) => {
+    if (!EBAY_KEY) return rej(new Error('clé eBay manquante'));
+    const cb = '__ebaycb' + (++ebayN);
+    const p = new URLSearchParams({
+      'OPERATION-NAME':'findItemsByKeywords', 'SERVICE-VERSION':'1.0.0',
+      'SECURITY-APPNAME':EBAY_KEY, 'RESPONSE-DATA-FORMAT':'JSON', callback:cb,
+      keywords, 'paginationInput.entriesPerPage':'30',
+      'itemFilter(0).name':'ListingType', 'itemFilter(0).value':'FixedPrice',
+    });
+    const s = document.createElement('script');
+    const to = setTimeout(() => { clean(); rej(new Error('délai dépassé')); }, 15000);
+    function clean() { clearTimeout(to); try { delete window[cb]; } catch {} s.remove(); }
+    window[cb] = d => { clean(); res(d); };
+    s.onerror = () => { clean(); rej(new Error('requête eBay bloquée')); };
+    s.src = 'https://svcs.ebay.com/services/search/FindingService/v1?' + p.toString();
+    document.head.append(s);
+  });
+}
+async function ebaySearch(name, number) {
+  const d = await ebayFind('pokemon TCG ' + name + ' ' + (number || ''));
+  const r = (d.findItemsByKeywordsResponse || [])[0] || {};
+  if ((r.ack || [''])[0] === 'Failure')
+    throw new Error((((r.errorMessage || [{}])[0].error || [{}])[0].message || ['eBay a refusé la requête'])[0]);
+  const items = (((r.searchResult || [])[0] || {}).item || []).map(it => {
+    const cp = (((it.sellingStatus || [])[0] || {}).currentPrice || [])[0];
+    return cp && cp['@currencyId'] === 'EUR' ? { title:it.title?.[0] || '', price:parseFloat(cp.__value__), url:it.viewItem?.[0] || '' } : null;
+  }).filter(Boolean).sort((a, b) => a.price - b.price);
+  if (!items.length) return null;
+  const prices = items.map(i => i.price);
+  return { median:+prices[prices.length >> 1].toFixed(2),
+           avg:+(prices.reduce((a, b) => a + b, 0) / prices.length).toFixed(2),
+           count:prices.length, items };
+}
+async function ebayAvg(name, number) {
+  const r = await ebaySearch(name, number);
+  return r ? { median:r.median, avg:r.avg, count:r.count } : null;
+}
+const latestEbay = id => { const h = Object.entries(EBAY_HIST[id] || {}).sort(); return h.length ? h[h.length - 1][1] : null; };
+function realAvg(c) {
+  const vals = [c.prices?.trendPrice, c.tcg?.normal, c.tcg?.holo].filter(v => v > 0);
+  const eb = latestEbay(c.tcg_id); if (eb) vals.push(eb);
+  if (!vals.length) return null;
+  vals.sort((a, b) => a - b);
+  return +vals[vals.length >> 1].toFixed(2);
+}
+
+/* =====================================================  IA perso : Reddit + goûts  */
+const SENT_UP = ['hausse','explose','investir','investment','sous-cote','grail','rare','demande','record','monte','spiking','rising','underrated','gem mint','psa 10'];
+const SENT_DOWN = ['crash','baisse','chute','surcote','overpriced','reprint','drop','flop','bulle'];
+const RSUB = { fr:['PokemonTCG','PokemonTCGDeals','france'], en:['PokemonTCG','PokemonTCGDeals','pkmntcgcollections'], de:['PokemonTCG'], es:['PokemonTCG'] };
+let BUZZ = null;
+async function redditBuzz() {
+  const posts = [], subs = RSUB[SRC_LANG] || RSUB.en;
+  await Promise.all(subs.map(async s => {
+    try {
+      const d = await getJSON(`https://www.reddit.com/r/${s}/hot.json?limit=25&raw_json=1`);
+      for (const ch of (d.data || {}).children || [])
+        posts.push({ sub:s, title:ch.data.title, url:'https://www.reddit.com' + ch.data.permalink, score:ch.data.score, text:(ch.data.selftext || '').slice(0, 400) });
+    } catch (e) { ERRS.reddit = e.message; }
+  }));
+  posts.sort((a, b) => b.score - a.score);
+  return posts;
+}
+function buzzCards(posts) {
+  const map = {};
+  for (const c of [...TREND, ...WATCH]) {
+    if (map[c.tcg_id]) continue;
+    const n = norm(c.name); if (!n) continue;
+    let mentions = 0, sent = 0;
+    for (const p of posts) {
+      const t = norm(p.title + ' ' + p.text);
+      if (t.includes(n)) { mentions++; const up = SENT_UP.some(w => t.includes(w)), dn = SENT_DOWN.some(w => t.includes(w)); sent += up && !dn ? 1 : dn && !up ? -1 : 0; }
+    }
+    if (mentions) map[c.tcg_id] = { c, mentions, sent };
+  }
+  return map;
+}
+function cardHtml(c, note) {
+  const d = c.drop30 ?? 0, cls = d < -1 ? 'down' : d > 1 ? 'up' : 'flat';
+  return `<div class="card" data-id="${esc(c.tcg_id)}"><div class="top"><span class="thumbwrap"><img class="thumb" loading="lazy" src="${esc(c.image)}" alt=""></span><div><div class="name">${esc(c.name)}</div><div class="muted small">${esc(c.set_name)} · #${esc(c.number)}</div><div class="price">${eur(c.prices.trendPrice)}</div><span class="badge ${cls}">${pct(c.drop30)} / 30 j</span></div></div>${note ? `<div class="muted small">${note}</div>` : ''}<div class="buy">${buyLinksHtml(c)}</div></div>`;
+}
+function bindGrid(sel, pool) {
+  const g = $(sel); if (!g) return;
+  g.querySelectorAll('.card').forEach(el => el.onclick = () => openCard(el.dataset.id, pool.find(c => c.tcg_id === el.dataset.id)));
+  attachTilt(g);
+}
+async function smartAnalyze() {
+  const info = $('#smartInfo');
+  info.textContent = 'Lecture de Reddit…';
+  if (!TREND.length && FAVS.length) await loadTrend(true);
+  const posts = await redditBuzz();
+  BUZZ = { posts, cards:buzzCards(posts) };
+  const favNames = FAVS.map(f => norm(f.name));
+  const dexNames = Object.keys(DEX).map(id => norm(NAMES[id] || '')).filter(Boolean);
+  const scored = [];
+  for (const c of TREND) {
+    const n = norm(c.name);
+    const fav = favNames.some(f => n.includes(f)) || dexNames.some(d => d && n.includes(d));
+    const b = BUZZ.cards[c.tcg_id];
+    if (!fav && !b) continue;
+    const mentions = b ? b.mentions : 0, sent = b ? b.sent : 0;
+    const score = (fav ? 45 : 0) + mentions * 12 + sent * 8 + Math.max(-10, Math.min(20, -(c.drop30 ?? 0))) + (c.prices.trendPrice <= 50 ? 8 : 0);
+    const reason = (mentions ? `${mentions} mention(s) sur Reddit (${sent > 0 ? 'buzz positif' : sent < 0 ? 'avis mitigés' : 'neutre'})` : 'Correspond à tes goûts') + (fav ? ' · Pokémon que tu apprécies' : '');
+    scored.push({ c, score, reason });
+  }
+  scored.sort((a, b) => b.score - a.score);
+  $('#smartGrid').innerHTML = scored.length ? scored.slice(0, 12).map(({ c, reason }) => cardHtml(c, reason)).join('')
+    : '<div class="empty" style="grid-column:1/-1">Pas assez de données : choisis des Pokémon favoris, actualise les tendances, puis relance.</div>';
+  bindGrid('#smartGrid', TREND);
+  info.textContent = (posts.length ? `${posts.length} posts Reddit analysés · ` : 'Reddit inaccessible · ') + `${scored.length} carte(s) correspondent à ton profil.`;
+  $('#redditList').innerHTML = posts.length ? posts.slice(0, 8).map(p =>
+    `<div class="row"><div><div class="name" style="font-weight:650"><a href="${esc(p.url)}" target="_blank" rel="noopener" style="color:var(--accent)">${esc(p.title)}</a></div><div class="muted small">r/${esc(p.sub)} · ${p.score} points</div></div></div>`).join('')
+    : '<div class="empty">Aucun post récupéré (Reddit est peut-être bloqué par ton réseau).</div>';
+}
+$('#btnSmart').onclick = () => smartAnalyze().catch(e => { $('#smartInfo').textContent = 'Erreur : ' + e.message; });
+
+/* =====================================================  Chatbot PokéBot  */
+let AI_KEY = lsGet('aiKey', '');
+$('#aiKey').value = AI_KEY;
+$('#btnAiKey').onclick = () => { AI_KEY = $('#aiKey').value.trim(); lsSet('aiKey', AI_KEY); toast(AI_KEY ? 'IA en ligne activée' : 'Chatbot local activé'); };
+const chatLog = $('#chatLog');
+const BOT_WELCOME = 'Bienvenue, dresseur ! Je suis PokéBot 🤖\nJe connais les prix chargés dans l\'app, tes cartes suivies et le buzz Reddit.\nEssaie : « prix de Dracaufeu », « meilleures baisses », « où acheter Évoli », « que acheter avec 50 € », « buzz reddit », « aide ».';
+function addMsg(text, who) {
+  const d = document.createElement('div');
+  d.className = 'msg ' + who; d.innerHTML = text;
+  chatLog.append(d); chatLog.scrollTop = chatLog.scrollHeight;
+  return d;
+}
+function findCardIn(text) {
+  const q = norm(text);
+  let best = null;
+  for (const c of [...WATCH, ...TREND]) {
+    const n = norm(c.name);
+    if (n && q.includes(n) && (!best || n.length > norm(best.name).length)) best = c;
+  }
+  return best;
+}
+function cardLine(c) {
+  const d = c.drop30 ?? 0, cls = d < -1 ? 'down' : d > 1 ? 'up' : 'flat';
+  return `• <b>${esc(c.name)}</b> (${esc(c.set_name)}) — ${eur(c.prices.trendPrice)} <span class="badge ${cls}">${pct(c.drop30)} / 30 j</span>`;
+}
+function localAnswer(raw) {
+  const q = norm(raw);
+  if (/^(salut|bonjour|hello|hey|coucou|yo)\b/.test(q)) return 'Salut dresseur ! Demande-moi un prix, une baisse, où acheter, ou tape « aide ».';
+  if (q.includes('aide') || q.includes('help')) return 'Je sais faire :\n• « prix de Dracaufeu » — cote et tendance\n• « meilleures baisses » — top des chutes\n• « où acheter Évoli » — liens Cardmarket / eBay / TCGplayer\n• « que acheter avec 50 € » — idées selon ton budget\n• « ma liste » — tes cartes suivies\n• « buzz reddit » — ce que dit la communauté\n• « shiny » — tes stats de capture';
+  if (q.includes('shiny')) {
+    const n = Object.keys(DEX).reduce((a, i) => a + DEX[i].s, 0), tot = Object.keys(DEX).reduce((a, i) => a + DEX[i].n + DEX[i].s, 0);
+    return tot ? `Tu as capturé ${tot} Pokémon dont ${n} shiny ✨. La collection est dans l'onglet « Collection ».` : 'Aucune capture pour l\'instant : clique sur les Pokémon sauvages qui traversent la page !';
+  }
+  if (q.includes('ma liste') || q.includes('suivi')) {
+    if (!WATCH.length) return 'Ta liste est vide : cherche une carte dans « Cartes ciblées » ou ouvre-en une depuis les tendances.';
+    return 'Tes cartes suivies :\n' + WATCH.map(w => `• <b>${esc(w.name)}</b> — ${eur(w.last)} (seuil ${eur(w.target)})${w.ebay ? ' · eBay ' + eur(w.ebay.median) : ''}`).join('\n');
+  }
+  if (q.includes('buzz') || q.includes('reddit')) {
+    if (!BUZZ || !BUZZ.posts.length) return 'Je n\'ai pas encore de données Reddit : lance « Analyser Reddit + mes goûts » dans l\'onglet « Pour toi », puis redemande.';
+    const top = Object.values(BUZZ.cards).sort((a, b) => b.mentions - a.mentions).slice(0, 5);
+    return 'Ce que dit Reddit en ce moment :\n' + (top.length ? top.map(b => `• <b>${esc(b.c.name)}</b> — ${b.mentions} mention(s)${b.sent > 0 ? ' (buzz positif)' : b.sent < 0 ? ' (avis mitigés)' : ''}`).join('\n') : 'Aucune carte connue citée dans les posts récents.') + '\nDétails et posts dans l\'onglet « Pour toi ».';  }
+  if (q.includes('baisse') || q.includes('occasion') || q.includes('deal')) {
+    const top = [...TREND].filter(c => c.drop30 != null).sort((a, b) => a.drop30 - b.drop30).slice(0, 5);
+    return top.length ? 'Meilleures baisses 30 jours :\n' + top.map(cardLine).join('\n') : 'Aucune donnée : choisis tes favoris et actualise les tendances.';
+  }
+  const num = raw.match(/\d+([.,]\d+)?/);
+  if (num && (q.includes('avec') || q.includes('budget'))) {
+    const budget = parseFloat(num[0].replace(',', '.'));
+    const pool = TREND.filter(c => c.prices.trendPrice != null && c.prices.trendPrice <= budget);
+    const favNames = FAVS.map(f => norm(f.name));
+    const top = pool.map(c => ({ c, s:(favNames.some(f => norm(c.name).includes(f)) ? 30 : 0) + Math.max(-15, Math.min(25, -(c.drop30 ?? 0) * .8)) + Math.max(0, 1 - c.prices.trendPrice / budget) * 20 }))
+      .sort((a, b) => b.s - a.s).slice(0, 5);
+    return top.length ? `Dans ton budget de ${eur(budget)} :\n` + top.map(({ c }) => cardLine(c)).join('\n') + '\n\nVraie moyenne multi-sources visible en ouvrant chaque carte.' : `Rien sous ${eur(budget)} dans les cartes chargées : actualise les tendances ou augmente le budget.`;
+  }
+  if (q.includes('où acheter') || q.includes('ou acheter') || q.includes('acheter')) {
+    const c = findCardIn(raw);
+    if (c) return `Pour acheter <b>${esc(c.name)}</b> (${eur(c.prices.trendPrice)}) :\n${buyLinksHtml(c)}\n\nVraie moyenne multi-sources : ${eur(realAvg(c))}.`;
+    return 'Dis-moi le nom de la carte, ex : « où acheter Pikachu ? ».';
+  }
+  const c = findCardIn(raw);
+  if (c) {
+    return `<b>${esc(c.name)}</b> (${esc(c.set_name)} · #${esc(c.number)})\nPrix tendance : ${eur(c.prices.trendPrice)}\n30 jours : ${pct(c.drop30)} · 7 jours : ${pct(c.drop7)}\nMoyenne multi-sources : ${eur(realAvg(c))}\n${buyLinksHtml(c)}\nOuvre la carte depuis « Tendances » pour le graphique et l'historique.`;
+  }
+  return 'Je n\'ai pas compris 😅. Tape « aide » pour voir ce que je sais faire, ou le nom d\'une carte (ex : « prix de Pikachu »).';
+}
+function buildContext() {
+  const top = [...TREND].sort((a, b) => (a.drop30 ?? 0) - (b.drop30 ?? 0)).slice(0, 10)
+    .map(c => `${c.name} (${c.set_name} #${c.number}) : ${c.prices.trendPrice} EUR, ${c.drop30 ?? '?'}% / 30j`).join('\n');
+  const wl = WATCH.map(w => `${w.name} : ${w.last ?? '?'} EUR (seuil ${w.target})`).join('\n');
+  return 'Tendances actuelles :\n' + (top || 'aucune') + '\nListe de suivi :\n' + (wl || 'vide') +
+    (BUZZ && BUZZ.posts.length ? '\nBuzz Reddit : ' + Object.values(BUZZ.cards).sort((a, b) => b.mentions - a.mentions).slice(0, 5).map(b => b.c.name).join(', ') : '');
+}
+async function onlineAnswer(q) {
+  const r = await fetch('https://api.mistral.ai/v1/chat/completions', {
+    method:'POST',
+    headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer ' + AI_KEY },
+    body: JSON.stringify({ model:'mistral-small-latest',
+      messages:[{ role:'system', content:'Tu es PokéBot, l\'assistant en français d\'une app de suivi de prix de cartes Pokémon TCG. Réponds en français, de façon courte et concrète. Données du marché :\n' + buildContext() }, ...chatHist.slice(-6), { role:'user', content:q }] }),
+  });
+  if (!r.ok) throw new Error('erreur ' + r.status);
+  const d = await r.json();
+  return (d.choices?.[0]?.message?.content || '').trim() || 'Réponse vide.';
+}
+let chatHist = [];
+async function sendChat(text) {
+  if (!text.trim()) return;
+  addMsg(esc(text), 'me'); chatHist.push({ role:'user', content:text });
+  const typing = addMsg('PokéBot réfléchit…', 'bot typing');
+  let answer;
+  if (AI_KEY) { try { answer = await onlineAnswer(text); } catch (e) { answer = 'IA en ligne indisponible (' + esc(e.message) + ') — réponse locale :\n\n' + localAnswer(text); } }
+  else answer = localAnswer(text);
+  typing.remove();
+  addMsg(answer, 'bot'); chatHist.push({ role:'assistant', content:answer });
+  if (chatHist.length > 12) chatHist = chatHist.slice(-12);
+}
+$('#chatForm').onsubmit = e => { e.preventDefault(); const t = $('#chatInput').value; $('#chatInput').value = ''; sendChat(t); };
+document.querySelectorAll('.chips button').forEach(b => b.onclick = () => sendChat(b.dataset.q));
+
+/* =====================================================  Chasse aux offres  */
+function huntRow({ t, best, med, n, market, deal }) {
+  return `<div class="row">
+    <img src="${esc(t.image)}" alt="">
+    <div><div class="name" style="font-weight:650">${esc(t.name)} <span class="muted small">${esc(t.set_name)} · #${esc(t.number)}</span></div>
+      <div class="muted small">Marché multi-sources : <b>${eur(market)}</b>${med ? ` · médiane eBay : ${eur(med)} (${n} annonces)` : ''}</div>
+      ${best ? `<div>Meilleure annonce eBay : <b>${eur(best.price)}</b> ${deal != null ? `<span class="badge ${deal > 2 ? 'down' : 'flat'}">${deal > 0 ? '-' : ''}${deal} % vs marché</span>` : ''}<br><a class="small" href="${esc(best.url)}" target="_blank" rel="noopener">${esc((best.title || '').slice(0, 70))} ↗</a></div>`
+             : `<div class="muted small">${EBAY_KEY ? 'Aucune annonce en euros trouvée.' : 'Ajoute ton App ID eBay (Cartes ciblées → Réglages) pour mesurer les annonces.'}</div>`}
+      <div class="buy" style="margin-top:6px"><a href="${ebayUrl(t.name, t.number)}" target="_blank" rel="noopener">eBay ↗</a><a href="${lbcUrl(t.name, t.number)}" target="_blank" rel="noopener">Leboncoin ↗</a><a href="${cmUrl(t.name, t.number)}" target="_blank" rel="noopener">Cardmarket ↗</a></div>
+    </div></div>`;
+}
+let hunting = false;
+async function hunt() {
+  if (hunting) return; hunting = true;
+  const info = $('#huntInfo'), box = $('#huntList');
+  if (!WATCH.length && !TREND.length) { box.innerHTML = '<div class="empty">Ajoute des cartes à ta liste ou choisis des favoris d\'abord.</div>'; hunting = false; return; }
+  const targets = WATCH.length
+    ? WATCH.map(w => ({ tcg_id:w.tcg_id, name:w.name, set_name:w.set_name, number:w.number, image:w.image, src:w.src, prices:{ trendPrice:w.last ?? w.target } }))
+    : TREND.slice(0, 10);
+  info.textContent = `Analyse de ${targets.length} carte(s)${EBAY_KEY ? ' sur eBay' : ''}…`;
+  const rows = []; let lastErr = null;
+  for (const t of targets) {
+    let best = null, med = null, n = 0;
+    if (EBAY_KEY) { try { const r = await ebaySearch(t.name, t.number); if (r) { best = r.items[0]; med = r.median; n = r.count; } } catch (e) { lastErr = e.message; } }
+    const market = realAvg(t) ?? t.prices.trendPrice;
+    const deal = best && market ? Math.round((market - best.price) / market * 1000) / 10 : null;
+    rows.push({ t, best, med, n, market, deal });
+    const sorted = [...rows].sort((a, b) => (b.deal ?? -99) - (a.deal ?? -99));
+    box.innerHTML = sorted.map(huntRow).join('') + (rows.length < targets.length ? '<div class="muted small">Analyse en cours…</div>' : '');
+  }
+  info.textContent = `Terminé : ${rows.length} carte(s) analysée(s)` + (lastErr ? ' · eBay : ' + lastErr : '') + '.';
+  hunting = false;
+}
+$('#btnHunt').onclick = () => hunt();
+
+/* =====================================================  Valeur en direct (2 s)  */
+let LIVE = { card:null, pts:[], timer:null, realTimer:null, walk:0, lastReal:null, realAt:null, realSrc:'', nextRealAt:null, extra:[] };
+function liveStop() { clearInterval(LIVE.timer); clearInterval(LIVE.realTimer); LIVE.timer = LIVE.realTimer = null; }
+function liveTick() {
+  if (!LIVE.card) return;
+  if (!document.hidden && LIVE.lastReal != null) {
+    LIVE.walk = Math.max(-.02, Math.min(.02, LIVE.walk + (Math.random() - .5) * .004));
+    LIVE.pts.push({ t:Date.now(), v:+(LIVE.lastReal * (1 + LIVE.walk)).toFixed(2), real:false });
+  }
+  if (LIVE.pts.length > 300) LIVE.pts = LIVE.pts.slice(-300);
+  drawLive();
+}
+function drawLive() {
+  const pts = LIVE.pts.map(p => ({ l:new Date(p.t).toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit', second:'2-digit' }), v:p.v }));
+  $('#liveChart').innerHTML = pts.length >= 2 ? chart(pts, { w:640, h:240, big:true }) : '<div class="muted small">Collecte des mesures…</div>';
+  const cur = pts.length ? pts[pts.length - 1].v : null, first = pts.length ? pts[0].v : null;
+  const d = cur != null && first != null && first > 0 ? Math.round((cur - first) / first * 1000) / 10 : null;
+  const badge = $('#liveBadge');
+  badge.textContent = cur != null ? eur(cur) + (d != null ? ' ' + pct(d) : '') : '—';
+  badge.className = 'badge ' + (d == null ? 'flat' : d < 0 ? 'down' : 'up');
+  const next = LIVE.nextRealAt ? Math.max(0, Math.round((LIVE.nextRealAt - Date.now()) / 1000)) : null;
+  $('#liveMeta').textContent = (LIVE.lastReal != null ? `Dernière mesure réelle : ${LIVE.realSrc} à ${new Date(LIVE.realAt).toLocaleTimeString('fr-FR')}. ` : '')
+    + (next != null ? `Prochaine mesure réelle dans ${Math.floor(next / 60)} min ${next % 60} s. ` : '')
+    + 'Entre deux mesures : estimation fluide (±2 % max), les vraies données reprennent la main dès qu\'elles arrivent.';
+}
+async function liveReal() {
+  if (!LIVE.card) return;
+  const parts = [];
+  try {
+    const c = await fetchCard(LIVE.card.tcg_id, LIVE.card.src || 'ptcg');
+    if (c.prices.trendPrice != null) { LIVE.lastReal = c.prices.trendPrice; parts.push('Cardmarket'); snapshot(c); saveHist(); }
+  } catch {}
+  if (EBAY_KEY) {
+    try {
+      const e = await ebayAvg(LIVE.card.name, LIVE.card.number);
+      if (e) { LIVE.ebayMedian = e.median; parts.push('eBay'); (EBAY_HIST[LIVE.card.tcg_id] ||= {})[new Date().toISOString().slice(0, 10)] = e.median; lsSet('ebayHist', EBAY_HIST); }
+    } catch {}
+  }
+  if (parts.length) { LIVE.realAt = Date.now(); LIVE.realSrc = parts.join(' + '); LIVE.walk = 0; }
+  LIVE.nextRealAt = Date.now() + 5 * 60 * 1000;
+  drawLive();
+}
+function liveStart(card) {
+  liveStop();
+  LIVE.card = card; LIVE.pts = []; LIVE.walk = 0; LIVE.ebayMedian = null;
+  if (card.prices?.trendPrice != null) { LIVE.lastReal = card.prices.trendPrice; LIVE.realAt = Date.now(); LIVE.realSrc = 'données chargées'; }
+  else LIVE.lastReal = null;
+  LIVE.timer = setInterval(liveTick, 2000);
+  liveReal(); LIVE.realTimer = setInterval(liveReal, 5 * 60 * 1000);
+  liveTick();
+}
+function fillLiveSelect() {
+  const sel = $('#liveCard'), cur = sel.value, seen = new Map();
+  for (const c of [...WATCH, ...TREND, ...LIVE.extra]) if (c.tcg_id && !seen.has(c.tcg_id)) seen.set(c.tcg_id, c);
+  sel.innerHTML = '<option value="">— Choisir une carte —</option>' + [...seen.values()].map(c => `<option value="${esc(c.tcg_id)}">${esc(c.name)} — ${esc(c.set_name)} (${eur(c.prices?.trendPrice)})</option>`).join('');
+  if (LIVE.card) sel.value = LIVE.card.tcg_id; else if (cur) sel.value = cur;
+}
+$('#liveCard').onchange = () => {
+  const id = $('#liveCard').value;
+  const c = [...WATCH, ...TREND, ...LIVE.extra].find(x => x.tcg_id === id);
+  if (c) liveStart(c);
+};
+$('#liveSearchBtn').onclick = async () => {
+  const q = prompt('Nom de carte à suivre en direct (anglais) :');
+  if (!q) return;
+  try {
+    const res = await searchCards(q);
+    if (!res.length) return toast('Aucune carte trouvée');
+    LIVE.extra = res.slice(0, 10); fillLiveSelect(); liveStart(res[0]);
+  } catch (e) { toast('Erreur : ' + e.message); }
+};
+
+/* =====================================================  Mode application (PWA)  */
+function pokeballIcon(size) {
+  const c = document.createElement('canvas'); c.width = c.height = size;
+  const x = c.getContext('2d'), r = size / 2;
+  x.beginPath(); x.arc(r, r, r - 2, 0, 7); x.fillStyle = '#e3350d'; x.fill();
+  x.save(); x.beginPath(); x.arc(r, r, r - 2, 0, 7); x.clip();
+  x.fillStyle = '#1d1d28'; x.fillRect(0, r + size * .08, size, size);
+  x.restore();
+  x.beginPath(); x.arc(r, r, r - 2, 0, 7); x.lineWidth = Math.max(4, size * .05); x.strokeStyle = '#1d1d28'; x.stroke();
+  x.fillStyle = '#fff'; x.fillRect(0, r - size * .055, size, size * .11);
+  x.beginPath(); x.arc(r, r, size * .13, 0, 7); x.fillStyle = '#fff'; x.fill(); x.stroke();
+  x.beginPath(); x.arc(r, r, size * .055, 0, 7); x.fillStyle = '#1d1d28'; x.fill();
+  return c.toDataURL('image/png');
+}
+(function installPWA() {
+  try {
+    const i192 = pokeballIcon(192), i512 = pokeballIcon(512);
+    const fav = document.createElement('link'); fav.rel = 'icon'; fav.href = i192; document.head.append(fav);
+    const touch = document.createElement('link'); touch.rel = 'apple-touch-icon'; touch.href = i192; document.head.append(touch);
+    const manifest = { name:'PokéMarket — Pokémon TCG Tracker', short_name:'PokéMarket',
+      description:'Suivi de prix des cartes Pokémon TCG : tendances, alertes, offres eBay et chatbot.',
+      start_url:location.href, scope:location.href, display:'standalone', orientation:'portrait-primary',
+      background_color:'#f4f1e8', theme_color:'#e3350d',
+      icons:[{ src:i192, sizes:'192x192', type:'image/png' }, { src:i512, sizes:'512x512', type:'image/png', purpose:'any maskable' }] };
+    const link = document.createElement('link'); link.rel = 'manifest';
+    link.href = URL.createObjectURL(new Blob([JSON.stringify(manifest)], { type:'application/manifest+json' }));
+    document.head.append(link);
+  } catch {}
+})();
+
+/* =====================================================  Démarrage  */
+updateStats();
+evaluate();
+$('#lang').value = LANG;
+$('#lang').onchange = () => { LANG = $('#lang').value; lsSet('lang', LANG); renderFavBar(); if (window.redrawPicker && overlay.classList.contains('on')) window.redrawPicker(); };
+loadAllNames().then(renderFavBar).catch(() => {});
+
+/* Test de connexion : si internet est bloqué (ex. aperçu intégré), on l'explique au lieu d'afficher une page vide */
+async function checkNet() {
+  try {
+    const c = new AbortController(); const t = setTimeout(() => c.abort(), 8000);
+    const r = await fetch(SPRITE(1, false), { signal:c.signal }); clearTimeout(t);
+    if (!r.ok) throw 0;
+    $('#netBanner').innerHTML = ''; return true;
+  } catch {
+    $('#netBanner').innerHTML = `<div class="banner warn">Cette page n'arrive pas à se connecter à internet, donc elle ne peut charger ni les prix ni les images.<br>
+      Si tu l'as ouverte depuis l'aperçu de Claude, c'est normal : l'aperçu bloque les connexions externes. Enregistre le fichier <b>index.html</b>, puis ouvre-le dans Chrome, Edge, Firefox ou Safari (clic droit sur le fichier, « Ouvrir avec »).<br>
+      <button class="btn" onclick="checkNet().then(ok => ok && loadTrend(true))">Réessayer</button></div>`;
+    return false;
+  }
+}
+checkNet();
+loadTrend();
+showView('home');
+if (wildOn) scheduleSpawn(2500);
+// vérification des cartes suivies : au démarrage si la dernière date de plus de 30 min, puis toutes les heures
+if (WATCH.length && Date.now() - lsGet('lastCheck', 0) > 30 * 60 * 1000) checkAll();
+setInterval(() => { if (WATCH.length) checkAll(); }, 60 * 60 * 1000);
+</script>
+</body>
+</html>
