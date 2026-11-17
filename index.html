@@ -84,6 +84,8 @@
   .badge.up { background:var(--up-soft); color:var(--up); }
   .badge.flat { background:var(--bg); color:var(--muted); border:1px solid var(--line); }
   .badge.hit { background:var(--down-soft); color:var(--down); }
+  .badge.win { background:var(--down-soft); color:var(--down); }
+  .badge.lose { background:var(--up-soft); color:var(--up); }
 
   /* ---------- graphiques ---------- */
   svg.chart { width:100%; height:auto; display:block; overflow:visible; }
@@ -185,8 +187,7 @@
   --bg:#f3f5fb;
   --surface:#ffffff;
   --text:#172033;
-  --muted:#758099;
-  --line:#e4e8f1;
+  --muted:#758099;  --line:#e4e8f1;
   --accent:#5265e8;
   --accent-soft:#edf0ff;
   --down:#168653;
@@ -222,7 +223,8 @@ header {
   background:color-mix(in srgb,var(--surface) 82%,transparent);
   border-bottom:1px solid color-mix(in srgb,var(--line) 82%,transparent);
 }
-.bar { max-width:1180px; min-height:70px; padding:12px 24px; gap:20px; }.brand { font-size:1.14rem; letter-spacing:-.04em; gap:10px; }
+.bar { max-width:1180px; min-height:70px; padding:12px 24px; gap:20px; }
+.brand { font-size:1.14rem; letter-spacing:-.04em; gap:10px; }
 .brand .ball { width:23px;height:23px;box-shadow:0 2px 6px rgba(0,0,0,.16); }
 .brand-accent { color:var(--accent); }
 .brand-tag {
@@ -419,6 +421,17 @@ nav button.on, .seg button.on { background:var(--accent-soft); color:var(--accen
 .row img { aspect-ratio:245/342; object-fit:cover; }
 .modal .head img { aspect-ratio:245/342; object-fit:cover; }
 .grid > .card { align-self:start; }
+
+/* --- correction : prix et textes qui débordent --- */
+.card .top > div, .row > div { min-width:0; }
+.card .price { font-size:.66rem; line-height:1.8; overflow-wrap:anywhere; }
+.card .name { overflow-wrap:anywhere; }
+.kpi b { font-size:.62rem; overflow-wrap:anywhere; }
+.kpi span { overflow-wrap:anywhere; }
+.badge { max-width:100%; overflow-wrap:anywhere; }
+.row b { overflow-wrap:anywhere; }
+.hero h2, .hero p { overflow-wrap:anywhere; }
+
 /* --- version mobile (téléphone) --- */
 @media (max-width:700px) {
   main { padding:18px 12px calc(88px + env(safe-area-inset-bottom)); }
@@ -446,15 +459,8 @@ nav button.on, .seg button.on { background:var(--accent-soft); color:var(--accen
   .homeBar h2 { font-size:.68rem !important; }
   .alertform { align-items:stretch; }
   .alertform input[type=number] { width:100%; }
-}/* --- correction : prix et textes qui débordent --- */
-.card .top > div, .row > div { min-width:0; }
-.card .price { font-size:.66rem; line-height:1.8; overflow-wrap:anywhere; }
-.card .name { overflow-wrap:anywhere; }
-.kpi b { font-size:.62rem; overflow-wrap:anywhere; }
-.kpi span { overflow-wrap:anywhere; }
-.badge { max-width:100%; overflow-wrap:anywhere; }
-.row b { overflow-wrap:anywhere; }
-.hero h2, .hero p { overflow-wrap:anywhere; }
+}
+
 </style>
 </head>
 <body>
@@ -465,6 +471,7 @@ nav button.on, .seg button.on { background:var(--accent-soft); color:var(--accen
       <button data-v="home" class="on">Accueil</button>
       <button data-v="trend">Tendances</button>
       <button data-v="list">Cartes ciblées</button>
+      <button data-v="wallet">Portefeuille</button>
       <button data-v="pokemon">Pokémon appréciés</button>
       <button data-v="ai">Chatbot IA</button>
       <button data-v="foryou">Pour toi</button>
@@ -484,8 +491,7 @@ nav button.on, .seg button.on { background:var(--accent-soft); color:var(--accen
       <option value="es">Español</option><option value="it">Italiano</option><option value="ja">日本語</option>
       <option value="ko">한국어</option><option value="zh-Hans">中文</option>
     </select>
-    <select id="srcLang" title="Langue des sources (Reddit, eBay, annonces)">
-      <option value="fr">Sources : FR</option><option value="en">Sources : EN</option>
+    <select id="srcLang" title="Langue des sources (Reddit, eBay, annonces)">      <option value="fr">Sources : FR</option><option value="en">Sources : EN</option>
       <option value="de">Sources : DE</option><option value="es">Sources : ES</option>
     </select>
     <label class="switch"><input type="checkbox" id="wildToggle" checked> Pokémon sauvages</label>
@@ -539,7 +545,8 @@ nav button.on, .seg button.on { background:var(--accent-soft); color:var(--accen
   <section class="view" id="v-list">
     <div class="eyebrow">TON RADAR PERSONNEL</div><h1>Mes cartes sélectionnées</h1>
     <p class="lead">Ta première catégorie : ajoute manuellement les cartes que tu veux suivre, fixe un prix cible et reçois une alerte dès que le marché atteint ton seuil. Vérification toutes les heures tant que la page reste ouverte.</p>
-    <div id="alertBanner"></div>    <div class="tools">
+    <div id="alertBanner"></div>
+    <div class="tools">
       <form id="searchForm" class="tools" style="margin:0;flex:1">
         <input type="search" id="q" placeholder="Chercher une carte (nom anglais : Charizard, Pikachu…)" required>
         <button class="btn primary" type="submit">Rechercher</button>
@@ -559,7 +566,8 @@ nav button.on, .seg button.on { background:var(--accent-soft); color:var(--accen
         <input type="text" id="ebayKey" placeholder="App ID eBay (developer.ebay.com, gratuit)">
         <button class="btn" id="btnEbayKey">Enregistrer</button>
         <span>Avec une clé eBay, l'app interroge les annonces eBay à chaque vérification et calcule une vraie moyenne multi-sources (Cardmarket + TCGplayer + eBay).</span>
-      </div>      <div class="tools" style="margin:10px 0 0">
+      </div>
+      <div class="tools" style="margin:10px 0 0">
         <button class="btn" id="btnSaveKey">🔑 Créer ma clé de sauvegarde</button>
         <label class="switch"><input type="checkbox" id="saveSecrets"> inclure mes clés API</label>
       </div>
@@ -571,6 +579,14 @@ nav button.on, .seg button.on { background:var(--accent-soft); color:var(--accen
     </details>
     <h2>Cartes suivies</h2>
     <div id="watchlist"></div>
+  </section>
+
+  <!-- ========== Portefeuille ========== -->
+  <section class="view" id="v-wallet">
+    <div class="eyebrow">MES ACHATS • PLUS-VALUE</div><h1>Mon portefeuille</h1>
+    <p class="lead">Indique ton prix d'achat quand tu suis une carte (fenêtre de détail → « Prix d'achat ») : l'app calcule ce que vaut ta collection aujourd'hui et ta plus ou moins-value.</p>
+    <div class="kpis" id="walletKpis" style="margin-bottom:14px"></div>
+    <div id="walletList"></div>
   </section>
 
   <!-- ========== Pokémon appréciés ========== -->
@@ -706,8 +722,7 @@ async function getJSON(url, headers = {}, attempt = 0) {
     return await r.json();
   } catch (e) {
     if (attempt < 1) return getJSON(url, headers, attempt + 1);
-    throw new Error(e.name === 'AbortError' ? 'délai dépassé' : e.message === 'Failed to fetch' ? 'connexion impossible' : e.message);
-  } finally { clearTimeout(timer); }
+    throw new Error(e.name === 'AbortError' ? 'délai dépassé' : e.message === 'Failed to fetch' ? 'connexion impossible' : e.message);  } finally { clearTimeout(timer); }
 }
 const ptcgGet = (path, params = {}) => limitPtcg(() => {
   const u = new URL(PTCG + path);
@@ -803,7 +818,8 @@ function chart(points, { w = 300, h = 84, big = false } = {}) {
     pts.forEach((p, i) => { if (pts.length <= 10 || i % Math.ceil(pts.length / 8) === 0) extra += `<text class="ax" x="${X(i).toFixed(1)}" y="${h - 9}" text-anchor="middle">${esc(p.l)}</text>`; });
   }
   const dots = (big || pts.length <= 6) ? pts.map((p, i) =>
-    `<circle class="dot" cx="${X(i).toFixed(1)}" cy="${Y(p.v).toFixed(1)}" r="${big ? 4 : 2.5}"><title>${esc(p.l)} : ${eur(p.v)}</title></circle>`).join('') : '';  return `<svg class="chart ${cls}" viewBox="0 0 ${w} ${h}" role="img" aria-label="Évolution du prix : ${cls === 'down' ? 'baisse' : cls === 'up' ? 'hausse' : 'stable'}">${extra}<path class="area" d="${area}"/><path class="line" d="${line}"/>${dots}</svg>`;
+    `<circle class="dot" cx="${X(i).toFixed(1)}" cy="${Y(p.v).toFixed(1)}" r="${big ? 4 : 2.5}"><title>${esc(p.l)} : ${eur(p.v)}</title></circle>`).join('') : '';
+  return `<svg class="chart ${cls}" viewBox="0 0 ${w} ${h}" role="img" aria-label="Évolution du prix : ${cls === 'down' ? 'baisse' : cls === 'up' ? 'hausse' : 'stable'}">${extra}<path class="area" d="${area}"/><path class="line" d="${line}"/>${dots}</svg>`;
 }
 const avgSeries = p => [
   { l:'Moy. 30 j', v:p.avg30 }, { l:'Moy. 7 j', v:p.avg7 }, { l:'Moy. 24 h', v:p.avg1 }, { l:'Tendance', v:p.trendPrice },
@@ -816,6 +832,7 @@ function showView(v) {
   document.querySelectorAll('.view').forEach(s => s.classList.toggle('on', s.id === 'v-' + v));
   if (v === 'home') loadHome();
   if (v === 'list') renderList();
+  if (v === 'wallet') renderWallet();
   if (v === 'pokemon') renderFavBar();
   if (v === 'ai') { if (!TREND.length && FAVS.length) loadTrend(); if (chatLog && !chatLog.children.length) addMsg(BOT_WELCOME, 'bot'); }
   if (v === 'live') { fillLiveSelect(); if (LIVE.card && !LIVE.timer) liveStart(LIVE.card); } else liveStop();
@@ -939,8 +956,7 @@ async function openPicker() {
     const isFav = p => FAVS.some(f => f.name === p.n.en);
     let html = list.map(p => `<button class="pk ${isFav(p) ? 'on' : ''}" data-id="${p.id}" title="${esc(allNamesTitle({ id:p.id, name:p.n.en }))}">
         <img class="art" loading="lazy" src="${ART(p.id)}" alt="" ${IMGERR}><span>${esc(p.n[LANG] || p.n.en)}</span>${LANG !== 'en' ? `<small>${esc(p.n.en)}</small>` : ''}</button>`).join('');
-    if (failed) html = `<div class="empty" style="grid-column:1/-1">Impossible de charger la liste des Pokémon (pas d'accès à internet).<br>Tu peux quand même taper un nom anglais puis l'ajouter ci-dessous.</div>`;
-    else if (q && !list.length) html = `<div class="empty" style="grid-column:1/-1">Aucun Pokémon trouvé.</div>`;
+    if (failed) html = `<div class="empty" style="grid-column:1/-1">Impossible de charger la liste des Pokémon (pas d'accès à internet).<br>Tu peux quand même taper un nom anglais puis l'ajouter ci-dessous.</div>`;    else if (q && !list.length) html = `<div class="empty" style="grid-column:1/-1">Aucun Pokémon trouvé.</div>`;
     if (raw) html += `<button class="pk" data-custom="1"><span style="padding:22px 0">Ajouter « ${esc(raw)} » tel quel</span></button>`;
     $('#pkGrid').innerHTML = html;
     $('#pkGrid').querySelectorAll('.pk').forEach(b => b.onclick = () => {
@@ -1049,7 +1065,8 @@ function renderTrend(pending = 0, failedAll = false) {
     return `<div class="card" data-id="${esc(c.tcg_id)}">
       <div class="top"><span class="thumbwrap"><img class="thumb" loading="lazy" src="${esc(c.image)}" alt=""></span>
         <div><div class="name">${esc(c.name)}</div><div class="muted small">${esc(c.set_name)} · #${esc(c.number)}</div>
-        <div class="price">${eur(c.prices.trendPrice)}</div>        <span class="badge ${cls}">${pct(d)} / ${plabel}</span></div></div>
+        <div class="price">${eur(c.prices.trendPrice)}</div>
+        <span class="badge ${cls}">${pct(d)} / ${plabel}</span></div></div>
       ${chart(PERIOD === 365 ? histOf(c.tcg_id, 365) : avgSeries(c.prices))}
       <div class="buy">${buyLinksHtml(c)}</div>
     </div>`;
@@ -1113,6 +1130,8 @@ function renderModal(c) {
     <div class="alertform">
       <span style="font-weight:600">M'alerter sous</span>
       <input type="number" id="mTarget" step="0.01" min="0" value="${followed ? followed.target : suggest}" placeholder="€">
+      <span style="font-weight:600">Prix d'achat (€, facultatif)</span>
+      <input type="number" id="mBought" step="0.01" min="0" value="${followed && followed.bought ? followed.bought : ''}" placeholder="€">
       <select id="mMetric">${opts}</select>
       <button class="btn primary" id="mFollow">${followed ? 'Mettre à jour' : 'Suivre cette carte'}</button>
       ${c.url ? `<a class="small" style="margin-left:auto;color:var(--accent)" href="${esc(c.url)}" target="_blank" rel="noopener">Voir sur Cardmarket ↗</a>` : ''}
@@ -1122,12 +1141,14 @@ function renderModal(c) {
   $('#mFollow').onclick = () => {
     const target = parseFloat($('#mTarget').value);
     if (!(target > 0)) return toast('Indique un seuil en euros.');
+    const bought = parseFloat($('#mBought').value);
     const metric = $('#mMetric').value;
     const price = c.prices[metric];
     const w = WATCH.find(x => x.tcg_id === c.tcg_id);
     if (w) Object.assign(w, { target, metric, last:price, alerted:false });
     else WATCH.push({ src:c.src, tcg_id:c.tcg_id, name:c.name, set_name:c.set_name, number:c.number, image:c.image, url:c.url,
                       metric, target, last:price, checked:nowStr(), alerted:false });
+    if (bought > 0) { const x = WATCH.find(x2 => x2.tcg_id === c.tcg_id); x.bought = bought; x.boughtAt = x.boughtAt || nowStr(); }
     saveWatch(); snapshot(c); saveHist();
     toast(c.name + ' ajoutée à ta liste'); closeModal(); evaluate();
   };
@@ -1160,13 +1181,12 @@ function renderList() {
   $('#alertBanner').innerHTML = hits.length
     ? `<div class="banner">Seuil atteint : ${hits.map(w => esc(w.name) + ' (' + eur(w.last) + ')').join(' · ')}</div>` : '';
   if (!WATCH.length) { box.innerHTML = '<div class="empty">Aucune carte suivie. Cherche une carte ci-dessus ou ouvre-en une depuis les tendances.</div>'; return; }
-  const opts = sel => Object.entries(METRICS).map(([k, v]) => `<option value="${k}" ${k === sel ? 'selected' : ''}>${esc(v)}</option>`).join('');
-  box.innerHTML = WATCH.map((r, i) => {
+  const opts = sel => Object.entries(METRICS).map(([k, v]) => `<option value="${k}" ${k === sel ? 'selected' : ''}>${esc(v)}</option>`).join('');  box.innerHTML = WATCH.map((r, i) => {
     const hit = r.last != null && r.last <= r.target;
     return `<div class="row">
       <img src="${esc(r.image)}" alt="">
       <div><div class="name" style="font-weight:650">${esc(r.name)} <span class="muted small">${esc(r.set_name)} · #${esc(r.number)}</span></div>
-        <div><b style="font-variant-numeric:tabular-nums">${eur(r.last)}</b> <span class="muted small">· seuil ${eur(r.target)}</span>${r.ebay ? ` <span class="muted small">· eBay ${eur(r.ebay.median)}</span>` : ''}
+        <div><b style="font-variant-numeric:tabular-nums">${eur(r.last)}</b> <span class="muted small">· seuil ${eur(r.target)}</span>${r.ebay ? ` <span class="muted small">· eBay ${eur(r.ebay.median)}</span>` : ''}${r.bought ? ` <span class="muted small">· achetée ${eur(r.bought)}</span>` : ''}
           <span class="badge ${hit ? 'hit' : 'flat'}">${hit ? 'Seuil atteint' : 'En attente'}</span></div>
         <div class="muted small">${esc(METRICS[r.metric])} · vérifié : ${esc(r.checked || '—')}</div></div>
       <div class="acts">
@@ -1187,6 +1207,40 @@ function updateWatch(i) {
 function removeWatch(i) {
   if (!confirm('Retirer cette carte de la liste ?')) return;
   WATCH.splice(i, 1); saveWatch(); renderList();
+}
+
+/* =====================================================  Portefeuille (plus-value)  */
+function renderWallet() {
+  const kpisEl = $('#walletKpis'), box = $('#walletList');
+  const items = WATCH.filter(w => w.bought > 0);
+  if (!items.length) {
+    kpisEl.innerHTML = '';
+    box.innerHTML = '<div class="empty">Aucun achat enregistré.<br><br>Ouvre une carte (depuis Tendances ou Cartes ciblées) et remplis le champ « Prix d\'achat » : ta plus-value apparaîtra ici.</div>';
+    return;
+  }
+  let inv = 0, cur = 0;
+  const rows = items.map(w => {
+    const pl = w.last != null ? w.last - w.bought : null;
+    const plp = pl != null && w.bought ? Math.round(pl / w.bought * 1000) / 10 : null;
+    inv += w.bought; if (w.last != null) cur += w.last;
+    const cls = pl == null ? 'flat' : pl >= 0 ? 'win' : 'lose';
+    return `<div class="row">
+      <img src="${esc(w.image)}" alt="">
+      <div><div class="name" style="font-weight:650">${esc(w.name)} <span class="muted small">${esc(w.set_name)} · #${esc(w.number)}</span></div>
+        <div><b>Achetée ${eur(w.bought)}</b> <span class="muted small">· maintenant ${eur(w.last)}</span>
+          <span class="badge ${cls}">${pl == null ? '?' : (pl >= 0 ? '+' : '') + pl.toFixed(2) + ' €' + (plp != null ? ' (' + (plp >= 0 ? '+' : '') + plp + ' %)' : '')}</span></div>
+        <div class="muted small">achetée le ${esc(w.boughtAt || '—')} · suivi sur ${esc(METRICS[w.metric])}</div></div>
+      <div class="acts"><button class="btn" onclick="openCard('${esc(w.tcg_id)}', null, '${esc(w.src || 'ptcg')}')">Détail</button></div>
+    </div>`;
+  }).join('');
+  const pl = cur - inv, plp = inv ? Math.round(pl / inv * 1000) / 10 : 0;
+  const cls = pl >= 0 ? 'win' : 'lose';
+  kpisEl.innerHTML = `<div class="kpi"><span>Valeur actuelle</span><b>${eur(cur)}</b></div>
+    <div class="kpi"><span>Total investi</span><b>${eur(inv)}</b></div>
+    <div class="kpi"><span>Plus-value</span><b>${eur(pl)}</b></div>
+    <div class="kpi"><span>Performance</span><b>${plp >= 0 ? '+' : ''}${plp} %</b></div>
+    <div class="kpi"><span>Cartes</span><b>${items.length}</b></div>`;
+  box.innerHTML = rows;
 }
 
 /* ---- alertes ---- */
@@ -1304,7 +1358,8 @@ function spawnWild() {
   el.setAttribute('aria-label', 'Pokémon sauvage, clique pour capturer');
   const w = innerWidth, h = innerHeight;
   el.style.left = (30 + Math.random() * Math.max(40, w - 150)) + 'px';
-  el.style.top = (80 + Math.random() * Math.max(40, h - 220)) + 'px';  const img = new Image(); img.alt = ''; img.draggable = false; img.src = SPRITE(id, shiny);
+  el.style.top = (80 + Math.random() * Math.max(40, h - 220)) + 'px';
+  const img = new Image(); img.alt = ''; img.draggable = false; img.src = SPRITE(id, shiny);
   img.onerror = () => el.remove();
   el.append(img); wildLayer.append(el);
   requestAnimationFrame(() => requestAnimationFrame(() => {
@@ -1381,8 +1436,7 @@ function buyLinksHtml(c) {
   ].map(([l, u]) => `<a href="${u}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${l} ↗</a>`).join('');
 }
 
-/* =====================================================  Suivi eBay (Finding API, JSONP)  */
-let EBAY_KEY = lsGet('ebayKey', ''), EBAY_HIST = lsGet('ebayHist', {}), ebayN = 0;
+/* =====================================================  Suivi eBay (Finding API, JSONP)  */let EBAY_KEY = lsGet('ebayKey', ''), EBAY_HIST = lsGet('ebayHist', {}), ebayN = 0;
 function ebayFind(keywords) {
   return new Promise((res, rej) => {
     if (!EBAY_KEY) return rej(new Error('clé eBay manquante'));
@@ -1528,7 +1582,7 @@ function cardLine(c) {
 function localAnswer(raw) {
   const q = norm(raw);
   if (/^(salut|bonjour|hello|hey|coucou|yo)\b/.test(q)) return 'Salut dresseur ! Demande-moi un prix, une baisse, où acheter, ou tape « aide ».';
-  if (q.includes('aide') || q.includes('help')) return 'Je sais faire :\n• « prix de Dracaufeu » — cote et tendance\n• « meilleures baisses » — top des chutes\n• « où acheter Évoli » — liens Cardmarket / eBay / TCGplayer\n• « que acheter avec 50 € » — idées selon ton budget\n• « ma liste » — tes cartes suivies\n• « buzz reddit » — ce que dit la communauté\n• « shiny » — tes stats de capture';
+  if (q.includes('aide') || q.includes('help')) return 'Je sais faire :\n• « prix de Dracaufeu » — cote et tendance\n• « meilleures baisses » — top des chutes\n• « où acheter Évoli » — liens Cardmarket / eBay / TCGplayer\n• « que acheter avec 50 € » — idées selon ton budget\n• « ma liste » — tes cartes suivies\n• « portefeuille » — ta plus-value\n• « buzz reddit » — ce que dit la communauté\n• « shiny » — tes stats de capture';
   if (q.includes('shiny')) {
     const n = Object.keys(DEX).reduce((a, i) => a + DEX[i].s, 0), tot = Object.keys(DEX).reduce((a, i) => a + DEX[i].n + DEX[i].s, 0);
     return tot ? `Tu as capturé ${tot} Pokémon dont ${n} shiny ✨. La collection est dans l'onglet « Collection ».` : 'Aucune capture pour l\'instant : clique sur les Pokémon sauvages qui traversent la page !';
@@ -1540,7 +1594,18 @@ function localAnswer(raw) {
   if (q.includes('buzz') || q.includes('reddit')) {
     if (!BUZZ || !BUZZ.posts.length) return 'Je n\'ai pas encore de données Reddit : lance « Analyser Reddit + mes goûts » dans l\'onglet « Pour toi », puis redemande.';
     const top = Object.values(BUZZ.cards).sort((a, b) => b.mentions - a.mentions).slice(0, 5);
-    return 'Ce que dit Reddit en ce moment :\n' + (top.length ? top.map(b => `• <b>${esc(b.c.name)}</b> — ${b.mentions} mention(s)${b.sent > 0 ? ' (buzz positif)' : b.sent < 0 ? ' (avis mitigés)' : ''}`).join('\n') : 'Aucune carte connue citée dans les posts récents.') + '\nDétails et posts dans l\'onglet « Pour toi ».';  }
+    return 'Ce que dit Reddit en ce moment :\n' + (top.length ? top.map(b => `• <b>${esc(b.c.name)}</b> — ${b.mentions} mention(s)${b.sent > 0 ? ' (buzz positif)' : b.sent < 0 ? ' (avis mitigés)' : ''}`).join('\n') : 'Aucune carte connue citée dans les posts récents.') + '\nDétails et posts dans l\'onglet « Pour toi ».';
+  }
+  if (q.includes('portefeuille') || q.includes('plus-value') || q.includes('investi')) {
+    const items = WATCH.filter(w => w.bought > 0);
+    if (!items.length) return 'Ton portefeuille est vide : ouvre une carte suivie et indique ton « Prix d\'achat » pour suivre ta plus-value.';
+    const inv = items.reduce((a, w) => a + w.bought, 0), cur = items.reduce((a, w) => a + (w.last ?? 0), 0);
+    const pl = cur - inv;
+    return '💰 Ton portefeuille :\n' + items.map(w => {
+      const p = w.last != null ? w.last - w.bought : null;
+      return `• <b>${esc(w.name)}</b> — achetée ${eur(w.bought)}, maintenant ${eur(w.last)}${p != null ? ` (${p >= 0 ? '+' : ''}${p.toFixed(2)} €)` : ''}`;
+    }).join('\n') + `\n\nTotal : investi ${eur(inv)} · valeur ${eur(cur)} · ${pl >= 0 ? '+' : ''}${pl.toFixed(2)} €\nDétails dans l'onglet « Portefeuille ».`;
+  }
   if (q.includes('baisse') || q.includes('occasion') || q.includes('deal')) {
     const top = [...TREND].filter(c => c.drop30 != null).sort((a, b) => a.drop30 - b.drop30).slice(0, 5);
     return top.length ? 'Meilleures baisses 30 jours :\n' + top.map(cardLine).join('\n') : 'Aucune donnée : choisis tes favoris et actualise les tendances.';
@@ -1556,7 +1621,7 @@ function localAnswer(raw) {
   }
   if (q.includes('où acheter') || q.includes('ou acheter') || q.includes('acheter')) {
     const c = findCardIn(raw);
-    if (c) return `Pour acheter <b>${esc(c.name)}</b> (${eur(c.prices.trendPrice)}) :\n${buyLinksHtml(c)}\n\nVraie moyenne multi-sources : ${eur(realAvg(c))}.`;
+    if (c) return `Pour acheter <b>${esc(c.name)}</b> (${eur(c.prices.trendPrice)}):\n${buyLinksHtml(c)}\n\nVraie moyenne multi-sources : ${eur(realAvg(c))}.`;
     return 'Dis-moi le nom de la carte, ex : « où acheter Pikachu ? ».';
   }
   const c = findCardIn(raw);
@@ -1570,8 +1635,7 @@ function buildContext() {
     .map(c => `${c.name} (${c.set_name} #${c.number}) : ${c.prices.trendPrice} EUR, ${c.drop30 ?? '?'}% / 30j`).join('\n');
   const wl = WATCH.map(w => `${w.name} : ${w.last ?? '?'} EUR (seuil ${w.target})`).join('\n');
   return 'Tendances actuelles :\n' + (top || 'aucune') + '\nListe de suivi :\n' + (wl || 'vide') +
-    (BUZZ && BUZZ.posts.length ? '\nBuzz Reddit : ' + Object.values(BUZZ.cards).sort((a, b) => b.mentions - a.mentions).slice(0, 5).map(b => b.c.name).join(', ') : '');
-}
+    (BUZZ && BUZZ.posts.length ? '\nBuzz Reddit : ' + Object.values(BUZZ.cards).sort((a, b) => b.mentions - a.mentions).slice(0, 5).map(b => b.c.name).join(', ') : '');}
 async function onlineAnswer(q) {
   const r = await fetch('https://api.mistral.ai/v1/chat/completions', {
     method:'POST',
@@ -1734,6 +1798,40 @@ function pokeballIcon(size) {
     document.head.append(link);
   } catch {}
 })();
+
+/* =====================================================  Clé de sauvegarde  */
+const SAVE_KEYS = ['favs','watch','hist','dex','names','theme','lang','srcLang','wildOn','minPrice','ebayHist','trendCache2'];
+const SAVE_KEYS_SECRET = ['apiKey','ebayKey','aiKey'];
+const b64e = o => btoa(unescape(encodeURIComponent(JSON.stringify(o)))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+function b64d(s) {
+  s = s.trim().replace(/-/g, '+').replace(/_/g, '/'); while (s.length % 4) s += '=';
+  return JSON.parse(decodeURIComponent(escape(atob(s))));
+}
+function makeSaveKey(withSecrets = false) {
+  const o = { app:'pokemarket', v:2, d:{} };
+  for (const k of SAVE_KEYS) { const v = localStorage.getItem(k); if (v != null) o.d[k] = v; }
+  if (withSecrets) for (const k of SAVE_KEYS_SECRET) { const v = localStorage.getItem(k); if (v != null) o.d[k] = v; }
+  return b64e(o);
+}
+function applySaveKey(code) {
+  const o = b64d(code);
+  if (o.app !== 'pokemarket') throw new Error('ce n\'est pas une clé PokéMarket');
+  for (const [k, v] of Object.entries(o.d)) localStorage.setItem(k, v);
+  return Object.keys(o.d).length;
+}
+$('#btnSaveKey').onclick = () => {
+  const k = makeSaveKey($('#saveSecrets').checked);
+  $('#saveKeyOut').innerHTML = 'Ta clé de sauvegarde — copie-la et garde-la en lieu sûr (Notes, e-mail…) :<br>' +
+    `<textarea readonly onclick="this.select()" style="width:100%;height:84px;margin-top:6px;font-size:.7rem">${esc(k)}</textarea>`;
+  toast('Clé de sauvegarde créée : copie-la !', 'shiny', 6000);
+};
+$('#btnSaveRestore').onclick = () => {
+  try {
+    const n = applySaveKey($('#saveKeyIn').value);
+    toast('Sauvegarde restaurée (' + n + ' éléments) — rechargement…', 'shiny', 4000);
+    setTimeout(() => location.reload(), 1300);
+  } catch (e) { toast('Clé invalide : ' + e.message); }
+};
 
 /* =====================================================  Démarrage  */
 updateStats();
