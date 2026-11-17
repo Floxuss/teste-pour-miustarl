@@ -446,7 +446,15 @@ nav button.on, .seg button.on { background:var(--accent-soft); color:var(--accen
   .homeBar h2 { font-size:.68rem !important; }
   .alertform { align-items:stretch; }
   .alertform input[type=number] { width:100%; }
-}
+}/* --- correction : prix et textes qui débordent --- */
+.card .top > div, .row > div { min-width:0; }
+.card .price { font-size:.66rem; line-height:1.8; overflow-wrap:anywhere; }
+.card .name { overflow-wrap:anywhere; }
+.kpi b { font-size:.62rem; overflow-wrap:anywhere; }
+.kpi span { overflow-wrap:anywhere; }
+.badge { max-width:100%; overflow-wrap:anywhere; }
+.row b { overflow-wrap:anywhere; }
+.hero h2, .hero p { overflow-wrap:anywhere; }
 </style>
 </head>
 <body>
