@@ -551,7 +551,15 @@ nav button.on, .seg button.on { background:var(--accent-soft); color:var(--accen
         <input type="text" id="ebayKey" placeholder="App ID eBay (developer.ebay.com, gratuit)">
         <button class="btn" id="btnEbayKey">Enregistrer</button>
         <span>Avec une clé eBay, l'app interroge les annonces eBay à chaque vérification et calcule une vraie moyenne multi-sources (Cardmarket + TCGplayer + eBay).</span>
+      </div>      <div class="tools" style="margin:10px 0 0">
+        <button class="btn" id="btnSaveKey">🔑 Créer ma clé de sauvegarde</button>
+        <label class="switch"><input type="checkbox" id="saveSecrets"> inclure mes clés API</label>
       </div>
+      <div class="tools" style="margin:10px 0 0">
+        <input type="text" id="saveKeyIn" placeholder="Colle une clé de sauvegarde ici" style="max-width:none">
+        <button class="btn" id="btnSaveRestore">Restaurer</button>
+      </div>
+      <div class="muted small" id="saveKeyOut" style="margin-top:8px;word-break:break-all"></div>
     </details>
     <h2>Cartes suivies</h2>
     <div id="watchlist"></div>
