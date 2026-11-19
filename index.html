@@ -162,6 +162,10 @@
   .wild.shiny::before, .wild.shiny::after { content:"✦"; position:absolute; color:var(--gold); font-size:16px; animation:twinkle 1.2s ease-in-out infinite; pointer-events:none; }
   .wild.shiny::before { top:-4px; left:2px; }
   .wild.shiny::after { bottom:4px; right:-2px; font-size:12px; animation-delay:.5s; }
+  .wild.legend img { filter:drop-shadow(0 0 7px #3b4cca) drop-shadow(0 0 16px rgba(59,76,202,.65)); }
+  .wild.legend::before { content:"⚡"; position:absolute; top:-6px; left:0; font-size:15px; animation:twinkle 1.2s ease-in-out infinite; pointer-events:none; }
+  .wild.mythic img { filter:drop-shadow(0 0 7px #d644cf) drop-shadow(0 0 16px rgba(214,68,207,.55)); }
+  .wild.mythic::before { content:"🌟"; position:absolute; top:-6px; left:0; font-size:15px; animation:twinkle 1.2s ease-in-out infinite; pointer-events:none; }
   @keyframes twinkle { 0%,100% { opacity:.2; transform:scale(.6) rotate(0); } 50% { opacity:1; transform:scale(1.2) rotate(30deg); } }
   .catchball { position:absolute; left:50%; top:50%; width:34px; height:34px; margin:-17px; border-radius:50%; border:3px solid #20232b;
                background:linear-gradient(#e5484d 0 44%, #20232b 44% 56%, #fff 56%); animation:shake 1.1s ease-in-out; }
@@ -450,7 +454,12 @@ nav button.on, .seg button.on { background:var(--accent-soft); color:var(--accen
   .hero h2 { font-size:.85rem; }
   .hero p { font-size:.8rem; }
   .overlay { padding:0; align-items:flex-end; }
-  .modal { position:relative; max-width:none; border-radius:14px 14px 0 0; padding:16px; max-height:93vh; overflow:auto; margin:0; }
+  .modal { position:relative; max-width:none; border-radius:14px 14px 0 0; padding:16px; max-height:96vh; overflow:auto; margin:0; }
+  .modal .head { flex-direction:column; align-items:center; text-align:center; gap:10px; }
+  .modal .head img { width:190px; }
+  .modal .head > div { width:100%; }
+  .modal .head .close { position:absolute; top:10px; right:10px; margin:0; }
+  .kpis { grid-template-columns:repeat(2,1fr); }
   .chat { height:38vh; min-height:220px; }
   input, select, button.btn { min-height:44px; }
   input[type=search], input[type=text] { min-width:0; width:100%; max-width:none; }
@@ -461,6 +470,75 @@ nav button.on, .seg button.on { background:var(--accent-soft); color:var(--accen
   .alertform input[type=number] { width:100%; }
 }
 
+
+/* ================= Design moderne ================= */
+:root {
+  --pkborder:#e6e8f0;
+  --shadow:0 1px 2px rgba(20,24,40,.05), 0 12px 32px rgba(20,24,40,.08);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --pkborder:#262b36; --shadow:0 1px 2px rgba(0,0,0,.35), 0 14px 36px rgba(0,0,0,.4); }
+}
+html[data-theme="light"] {
+  --bg:#f5f6fa; --surface:#ffffff; --text:#1a1d26; --muted:#69707f; --line:#e6e8f0;
+  --accent:#e3350d; --accent-soft:#fdeadf; --accent-contrast:#ffffff; --pkborder:#e6e8f0;
+  --gold:#f0a500; --shadow:0 1px 2px rgba(20,24,40,.05), 0 12px 32px rgba(20,24,40,.08);
+}
+html[data-theme="dark"] { --pkborder:#262b36; --shadow:0 1px 2px rgba(0,0,0,.35), 0 14px 36px rgba(0,0,0,.4); }
+
+/* --- finie la police pixel : typographie lisse et moderne --- */
+h1, h2, .brand, .eyebrow, .price, nav button, .badge, .kpi b, .btn, .chip, .stats, .stats b {
+  font-family:system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+h1 { font-size:1.8rem; line-height:1.15; letter-spacing:-.03em; }
+h2 { font-size:1.05rem; line-height:1.35; letter-spacing:-.01em; }
+.eyebrow { font-size:.68rem; letter-spacing:.15em; font-weight:750; }
+.brand { font-size:1.08rem; font-weight:800; letter-spacing:-.02em; }
+nav button { font-size:.88rem; padding:8px 14px; line-height:1.2; font-weight:600; border-radius:10px; }
+.price { font-size:1.25rem; font-weight:800; letter-spacing:-.02em; }
+.badge { font-size:.74rem; font-weight:700; padding:4px 10px; }
+.btn { font-size:.88rem; line-height:1.2; font-weight:650; }
+.chip { font-size:.84rem; }
+.stats { font-size:.84rem; } .stats b { font-size:.9rem; }
+.kpi b { font-size:.95rem; letter-spacing:-.01em; }
+
+/* --- bordures fines, coins arrondis, ombres douces --- */
+.card, .row, .modal, .box, .banner, .empty, .pk, .mon, .chip, .seg, nav, .kpi, .chat {
+  border:1px solid var(--line);
+  border-radius:16px;
+  box-shadow:var(--shadow);
+}
+input, select, button.btn { border:1px solid var(--line); border-radius:12px; }
+button.primary {
+  background:linear-gradient(135deg, #e3350d, #ff6a3d);
+  color:#fff; border-color:transparent;
+  box-shadow:0 6px 18px rgba(227,53,13,.3);
+}
+button.primary:hover { filter:brightness(1.05); }
+.modal .head img, .card img.thumb {
+  border:1px solid var(--line); border-radius:12px;
+  background:linear-gradient(160deg,#fafbfd,#eef0f6);
+}
+
+/* --- bannière d'accueil moderne --- */
+.hero {
+  border:none; border-radius:20px;
+  background:linear-gradient(120deg, #e3350d 0%, #ff5c2b 55%, #ff9e2b 100%);
+  box-shadow:0 18px 44px rgba(227,53,13,.28);
+}
+.hero h2 { text-shadow:none; font-size:1.45rem; }
+.hero p { font-size:.95rem; }
+.hero .btn { background:#fff; color:#e3350d; border-color:#fff; box-shadow:0 4px 14px rgba(0,0,0,.12); }
+.hero .btn:hover { background:#ffe9d9; }
+
+/* --- boutons et liens plus doux --- */
+.buy a { border:1px solid var(--line); border-radius:99px; font-size:.72rem; background:var(--surface); }
+.buy a:hover { background:var(--accent-soft); color:var(--accent); }
+.chips button { border:1px solid var(--line); border-radius:99px; font-size:.78rem; }
+.chips button:hover { background:var(--accent-soft); color:var(--accent); }
+.msg.bot { border:1px solid var(--line); }
+.msg.me { border:1px solid transparent; }
+.toast { border-radius:14px; }
 </style>
 </head>
 <body>
@@ -1350,11 +1428,20 @@ function scheduleSpawn(delay) {
   }, delay);
 }
 
+const LEGEND = new Set([144,145,146,150,243,244,245,249,250,377,378,379,380,381,382,383,384,480,481,482,483,484,485,486,487,488,638,639,640,641,642,643,644,645,646,716,717,718,785,786,787,788,789,790,791,792,800,888,889,890,894,895,896,897,898]);
+const MYTHICAL = new Set([151,251,385,386,489,490,491,492,493,494,647,648,649,719,720,721,801,802,807,808,809,893]);
+const pickFrom = set => [...set][Math.floor(Math.random() * set.size)];
+function pickWildId() {                    // légendaire ~1/160, fabuleux ~1/400, sinon Pokémon normal
+  const r = Math.random();
+  if (r < 1 / 160) return pickFrom(LEGEND);
+  if (r < 1 / 160 + 1 / 400) return pickFrom(MYTHICAL);
+  return 1 + Math.floor(Math.random() * MAX_ID);
+}
 function spawnWild() {
-  const id = 1 + Math.floor(Math.random() * MAX_ID);
+  const id = pickWildId();
   const shiny = Math.random() < 1 / SHINY_ODDS;
   const el = document.createElement('button');
-  el.className = 'wild' + (shiny ? ' shiny' : '');
+  el.className = 'wild' + (shiny ? ' shiny' : '') + (LEGEND.has(id) ? ' legend' : MYTHICAL.has(id) ? ' mythic' : '');
   el.setAttribute('aria-label', 'Pokémon sauvage, clique pour capturer');
   const w = innerWidth, h = innerHeight;
   el.style.left = (30 + Math.random() * Math.max(40, w - 150)) + 'px';
@@ -1383,8 +1470,9 @@ async function capture(el, id, shiny, leaveTimer) {
   lsSet('dex', DEX); updateStats();
   el.style.transition = 'opacity .35s'; el.classList.remove('in'); setTimeout(() => el.remove(), 400);
   const name = await pokeName(id);
-  if (shiny) toast(`✨ ${name} shiny capturé !`, 'shiny', 5000);
-  else toast(`${name} capturé !` + (isNew ? ' (nouveau)' : ''));
+  const rank = LEGEND.has(id) ? ' ⚡ LÉGENDAIRE !' : MYTHICAL.has(id) ? ' 🌟 fabuleux !' : '';
+  if (shiny) toast(`✨ ${name} shiny capturé !${rank}`, 'shiny', 6000);
+  else toast(`${name} capturé !` + (rank ? rank : isNew ? ' (nouveau)' : ''), rank ? 'shiny' : '', rank ? 6000 : 3500);
   if ($('#v-dex').classList.contains('on')) renderDex();
 }
 
