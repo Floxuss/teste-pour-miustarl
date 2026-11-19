@@ -554,6 +554,7 @@ button.primary:hover { filter:brightness(1.05); }
       <button data-v="ai">Chatbot IA</button>
       <button data-v="foryou">Pour toi</button>
       <button data-v="hunt">Offres</button>
+      <button data-v="sets">Sets</button>
       <button data-v="live">En direct</button>
       <button data-v="dex">Collection</button>
     </nav>
@@ -717,12 +718,24 @@ button.primary:hover { filter:brightness(1.05); }
   <!-- ========== Chasse aux offres ========== -->
   <section class="view" id="v-hunt">
     <div class="eyebrow">IA CHASSEUSE D'OFFRES</div><h1>Offres et ventes en ligne</h1>
-    <p class="lead">L'IA compare, pour chaque carte suivie (ou de tes tendances), les annonces eBay à la moyenne du marché et trie les meilleures affaires. Leboncoin bloque l'accès automatique depuis un navigateur : un lien de recherche direct est fourni pour chaque carte.</p>
+    <p class="lead">L'IA compare, pour chaque carte suivie (ou de tes tendances), les annonces eBay à la moyenne du marché, trie les meilleures affaires et <b>signale les annonces suspectes</b> (prix irréaliste, mots douteux : probable fausse carte ou arnaque). Leboncoin bloque l'accès automatique depuis un navigateur : un lien de recherche direct est fourni pour chaque carte.</p>
     <div class="tools">
       <button class="btn primary" id="btnHunt">Chasser les offres</button>
       <span class="muted small" id="huntInfo"></span>
     </div>
     <div id="huntList"></div>
+  </section>
+
+  <!-- ========== Comparateur de sets ========== -->
+  <section class="view" id="v-sets">
+    <div class="eyebrow">QUEL SET ACHETER ?</div><h1>Comparateur de sets</h1>
+    <p class="lead">Analyse plusieurs séries Pokémon côte à côte : prix moyen, médiane, carte la plus chère et nombre de petites cartes. Une série avec une médiane basse et une grosse « chase card » en tête est souvent la plus intéressante à ouvrir ou à acheter à l'unité.</p>
+    <div class="tools">
+      <select id="setPick" style="min-width:260px"><option value="">— Choisir une série récente —</option></select>
+      <button class="btn primary" id="btnSetAdd">Analyser cette série</button>
+      <span class="muted small" id="setInfo"></span>
+    </div>
+    <div id="setComp"></div>
   </section>
 
   <!-- ========== Valeur en direct ========== -->
@@ -914,6 +927,7 @@ function showView(v) {
   if (v === 'pokemon') renderFavBar();
   if (v === 'ai') { if (!TREND.length && FAVS.length) loadTrend(); if (chatLog && !chatLog.children.length) addMsg(BOT_WELCOME, 'bot'); }
   if (v === 'live') { fillLiveSelect(); if (LIVE.card && !LIVE.timer) liveStart(LIVE.card); } else liveStop();
+  if (v === 'sets') fillSetPick();
   if (v === 'dex') renderDex();
   window.scrollTo({ top: 0 });
 }
@@ -1210,6 +1224,8 @@ function renderModal(c) {
       <input type="number" id="mTarget" step="0.01" min="0" value="${followed ? followed.target : suggest}" placeholder="€">
       <span style="font-weight:600">Prix d'achat (€, facultatif)</span>
       <input type="number" id="mBought" step="0.01" min="0" value="${followed && followed.bought ? followed.bought : ''}" placeholder="€">
+      <span style="font-weight:600">M'alerter au-dessus de (hausse, facultatif)</span>
+      <input type="number" id="mRise" step="0.01" min="0" value="${followed && followed.rise ? followed.rise : ''}" placeholder="€">
       <select id="mMetric">${opts}</select>
       <button class="btn primary" id="mFollow">${followed ? 'Mettre à jour' : 'Suivre cette carte'}</button>
       ${c.url ? `<a class="small" style="margin-left:auto;color:var(--accent)" href="${esc(c.url)}" target="_blank" rel="noopener">Voir sur Cardmarket ↗</a>` : ''}
@@ -1220,13 +1236,16 @@ function renderModal(c) {
     const target = parseFloat($('#mTarget').value);
     if (!(target > 0)) return toast('Indique un seuil en euros.');
     const bought = parseFloat($('#mBought').value);
+    const rise = parseFloat($('#mRise').value);
     const metric = $('#mMetric').value;
     const price = c.prices[metric];
     const w = WATCH.find(x => x.tcg_id === c.tcg_id);
     if (w) Object.assign(w, { target, metric, last:price, alerted:false });
     else WATCH.push({ src:c.src, tcg_id:c.tcg_id, name:c.name, set_name:c.set_name, number:c.number, image:c.image, url:c.url,
                       metric, target, last:price, checked:nowStr(), alerted:false });
-    if (bought > 0) { const x = WATCH.find(x2 => x2.tcg_id === c.tcg_id); x.bought = bought; x.boughtAt = x.boughtAt || nowStr(); }
+    const wf = WATCH.find(x2 => x2.tcg_id === c.tcg_id);
+    if (bought > 0) { wf.bought = bought; wf.boughtAt = wf.boughtAt || nowStr(); }
+    if (rise > 0) { wf.rise = rise; wf.riseAlerted = false; } else wf.rise = null;
     saveWatch(); snapshot(c); saveHist();
     toast(c.name + ' ajoutée à ta liste'); closeModal(); evaluate();
   };
@@ -1255,7 +1274,7 @@ $('#searchForm').addEventListener('submit', async e => {
 
 function renderList() {
   const box = $('#watchlist');
-  const hits = WATCH.filter(w => w.last != null && w.last <= w.target);
+  const hits = WATCH.filter(w => w.last != null && (w.last <= w.target || (w.rise != null && w.last >= w.rise)));
   $('#alertBanner').innerHTML = hits.length
     ? `<div class="banner">Seuil atteint : ${hits.map(w => esc(w.name) + ' (' + eur(w.last) + ')').join(' · ')}</div>` : '';
   if (!WATCH.length) { box.innerHTML = '<div class="empty">Aucune carte suivie. Cherche une carte ci-dessus ou ouvre-en une depuis les tendances.</div>'; return; }
@@ -1264,7 +1283,7 @@ function renderList() {
     return `<div class="row">
       <img src="${esc(r.image)}" alt="">
       <div><div class="name" style="font-weight:650">${esc(r.name)} <span class="muted small">${esc(r.set_name)} · #${esc(r.number)}</span></div>
-        <div><b style="font-variant-numeric:tabular-nums">${eur(r.last)}</b> <span class="muted small">· seuil ${eur(r.target)}</span>${r.ebay ? ` <span class="muted small">· eBay ${eur(r.ebay.median)}</span>` : ''}${r.bought ? ` <span class="muted small">· achetée ${eur(r.bought)}</span>` : ''}
+        <div><b style="font-variant-numeric:tabular-nums">${eur(r.last)}</b> <span class="muted small">· seuil ${eur(r.target)}</span>${r.rise ? ` <span class="muted small">· hausse si ≥ ${eur(r.rise)}</span>` : ''}${r.ebay ? ` <span class="muted small">· eBay ${eur(r.ebay.median)}</span>` : ''}${r.bought ? ` <span class="muted small">· achetée ${eur(r.bought)}</span>` : ''}
           <span class="badge ${hit ? 'hit' : 'flat'}">${hit ? 'Seuil atteint' : 'En attente'}</span></div>
         <div class="muted small">${esc(METRICS[r.metric])} · vérifié : ${esc(r.checked || '—')}</div></div>
       <div class="acts">
@@ -1329,12 +1348,23 @@ function fireAlert(w) {
       new Notification('Prix atteint : ' + w.name, { body:`${METRICS[w.metric]} : ${eur(w.last)} (seuil ${eur(w.target)})`, icon:w.image });
   } catch {}
 }
+function fireRiseAlert(w) {
+  toast(`↗ ${w.name} : ${eur(w.last)} — au-dessus de ton seuil de hausse ${eur(w.rise)}`, 'shiny', 9000);
+  try {
+    if ('Notification' in window && Notification.permission === 'granted')
+      new Notification('Hausse : ' + w.name, { body:`${eur(w.last)} — au-dessus de ton seuil ${eur(w.rise)}`, icon:w.image });
+  } catch {}
+}
 function evaluate() {                       // compare les prix connus aux seuils
   let n = 0;
   for (const w of WATCH) {
     if (w.last == null) continue;
     if (w.last <= w.target) { if (!w.alerted) { w.alerted = true; fireAlert(w); } n++; }
     else w.alerted = false;                 // le prix remonte : l'alerte se réarme
+    if (w.rise != null) {
+      if (w.last >= w.rise) { if (!w.riseAlerted) { w.riseAlerted = true; fireRiseAlert(w); } }
+      else w.riseAlerted = false;           // le prix redescend : l'alerte hausse se réarme
+    }
   }
   saveWatch(); updateTitle(n);
   if ($('#v-list').classList.contains('on')) renderList();
@@ -1752,11 +1782,14 @@ document.querySelectorAll('.chips button').forEach(b => b.onclick = () => sendCh
 
 /* =====================================================  Chasse aux offres  */
 function huntRow({ t, best, med, n, market, deal }) {
+  const tLow = (best?.title || '').toLowerCase();
+  const fakeHit = ['proxy','fake','fausse','reproduction','custom','handmade','mystery','lot de','x10','x20','booster pack'].some(k => tLow.includes(k));
+  const tooGood = deal != null && deal > 55;
   return `<div class="row">
     <img src="${esc(t.image)}" alt="">
     <div><div class="name" style="font-weight:650">${esc(t.name)} <span class="muted small">${esc(t.set_name)} · #${esc(t.number)}</span></div>
       <div class="muted small">Marché multi-sources : <b>${eur(market)}</b>${med ? ` · médiane eBay : ${eur(med)} (${n} annonces)` : ''}</div>
-      ${best ? `<div>Meilleure annonce eBay : <b>${eur(best.price)}</b> ${deal != null ? `<span class="badge ${deal > 2 ? 'down' : 'flat'}">${deal > 0 ? '-' : ''}${deal} % vs marché</span>` : ''}<br><a class="small" href="${esc(best.url)}" target="_blank" rel="noopener">${esc((best.title || '').slice(0, 70))} ↗</a></div>`
+      ${best ? `<div>Meilleure annonce eBay : <b>${eur(best.price)}</b> ${deal != null && !tooGood ? `<span class="badge ${deal > 2 ? 'down' : 'flat'}">${deal > 0 ? '-' : ''}${deal} % vs marché</span>` : ''}${(fakeHit || tooGood) ? ` <span class="badge up">⚠️ Suspect : ${fakeHit ? 'annonce douteuse' : 'prix trop bas pour être réel'} — arnaque possible</span>` : ''}<br><a class="small" href="${esc(best.url)}" target="_blank" rel="noopener">${esc((best.title || '').slice(0, 70))} ↗</a></div>`
              : `<div class="muted small">${EBAY_KEY ? 'Aucune annonce en euros trouvée.' : 'Ajoute ton App ID eBay (Cartes ciblées → Réglages) pour mesurer les annonces.'}</div>`}
       <div class="buy" style="margin-top:6px"><a href="${ebayUrl(t.name, t.number)}" target="_blank" rel="noopener">eBay ↗</a><a href="${lbcUrl(t.name, t.number)}" target="_blank" rel="noopener">Leboncoin ↗</a><a href="${cmUrl(t.name, t.number)}" target="_blank" rel="noopener">Cardmarket ↗</a></div>
     </div></div>`;
@@ -1784,6 +1817,66 @@ async function hunt() {
   hunting = false;
 }
 $('#btnHunt').onclick = () => hunt();
+
+/* =====================================================  Comparateur de sets  */
+let SETROWS = [];
+async function fillSetPick() {
+  const sel = $('#setPick');
+  if (sel.options.length > 1) return;
+  try {
+    const d = await ptcgGet('/sets', { orderBy:'-releaseDate', pageSize:'40' });
+    sel.innerHTML = '<option value="">— Choisir une série récente —</option>' +
+      d.data.map(s => `<option value="${esc(s.id)}">${esc(s.name)} (${(s.releaseDate || '').slice(0, 4)})</option>`).join('');
+  } catch (e) { sel.innerHTML = '<option value="">Séries indisponibles pour le moment</option>'; }
+}
+async function analyzeSet(setId) {
+  const d = await ptcgGet('/cards', { q:`set.id:"${setId}"`, pageSize:'250', select:FIELDS });
+  const cards = d.data.map(simplifyPtcg).filter(c => c.prices.trendPrice != null);
+  const ps = cards.map(c => c.prices.trendPrice).sort((a, b) => a - b);
+  if (!ps.length) return null;
+  const avg = ps.reduce((a, b) => a + b, 0) / ps.length;
+  const med = ps[ps.length >> 1];
+  const top = cards.slice().sort((a, b) => b.prices.trendPrice - a.prices.trendPrice).slice(0, 5);
+  const cheap = cards.filter(c => c.prices.trendPrice <= 5).length;
+  return { setId, cards, avg, med, top, cheap, n:ps.length, name:top[0]?.set_name || setId };
+}
+function removeSetRow(id) { SETROWS = SETROWS.filter(x => x.setId !== id); renderSetComp(); }
+function renderSetComp() {
+  const box = $('#setComp');
+  if (!SETROWS.length) { box.innerHTML = '<div class="empty">Analyse au moins une série pour voir son rapport qualité/prix. Analyse-en plusieurs pour les comparer côte à côte.</div>'; return; }
+  box.innerHTML = SETROWS.map(r => {
+    const pot = r.med > 0 ? (r.top[0].prices.trendPrice / r.med).toFixed(1) + 'x' : '—';
+    const topRows = r.top.map((c, i) =>
+      `<div class="row" style="grid-template-columns:44px 1fr auto;padding:8px;margin-bottom:6px"><img src="${esc(c.image)}" style="width:44px;height:60px" alt="">
+        <div><b class="small">${i + 1}. ${esc(c.name)}</b> <span class="muted small">${esc(c.set_name)} · #${esc(c.number)}</span></div>
+        <b>${eur(c.prices.trendPrice)}</b></div>`).join('');
+    return `<div class="box"><h4>${esc(r.name)} <button class="btn danger" style="float:right" onclick="removeSetRow('${esc(r.setId)}')">Retirer</button></h4>
+      <div class="kpis">
+        <div class="kpi"><span>Cartes à prix</span><b>${r.n}</b></div>
+        <div class="kpi"><span>Prix moyen</span><b>${eur(r.avg)}</b></div>
+        <div class="kpi"><span>Médiane</span><b>${eur(r.med)}</b></div>
+        <div class="kpi"><span>Cartes à moins de 5 €</span><b>${r.cheap}</b></div>
+        <div class="kpi"><span>Carte la plus chère</span><b>${eur(r.top[0].prices.trendPrice)}</b></div>
+        <div class="kpi"><span>Potentiel (chasse/médiane)</span><b>${pot}</b></div>
+      </div>
+      <h4>Top 5 cartes de la série</h4>${topRows}
+      <div class="muted small" style="margin-top:8px">Médiane basse + grosse carte en tête + beaucoup de cartes à moins de 5 € = série intéressante à chasser de manière stratégique ou à l'unité.</div></div>`;
+  }).join('')
+  + (SETROWS.length > 1
+    ? `<div class="banner">💡 Comparaison : ${SETROWS.slice().sort((a, b) => b.med - a.med).map(r => `${esc(r.name)} (médiane ${eur(r.med)})`).join(' · ')}. La série avec la médiane la plus BASSE et le plus grand « Potentiel » est souvent la meilleure pioche.</div>`
+    : '');
+}
+$('#btnSetAdd').onclick = async () => {
+  const id = $('#setPick').value;
+  if (!id) return toast('Choisis d\'abord une série.');
+  const info = $('#setInfo'); info.textContent = 'Analyse de la série…';
+  try {
+    const r = await analyzeSet(id);
+    if (!r) { info.textContent = 'Aucune donnée de prix pour cette série.'; return; }
+    SETROWS = SETROWS.filter(x => x.setId !== id); SETROWS.push(r);
+    renderSetComp(); info.textContent = '';
+  } catch (e) { info.textContent = 'Erreur : ' + e.message; }
+};
 
 /* =====================================================  Valeur en direct (2 s)  */
 let LIVE = { card:null, pts:[], timer:null, realTimer:null, walk:0, lastReal:null, realAt:null, realSrc:'', nextRealAt:null, extra:[] };
