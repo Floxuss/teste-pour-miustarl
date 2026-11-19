@@ -11,7 +11,7 @@
 <title>PokéMarket — Pokémon TCG Tracker</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Baloo+2:wght@600;700;800&display=swap" rel="stylesheet">
 <style>
   :root {
     --bg:#f7f7f9; --surface:#fff; --text:#16181d; --muted:#6a7080; --line:#e6e8ee;
@@ -471,74 +471,150 @@ nav button.on, .seg button.on { background:var(--accent-soft); color:var(--accen
 }
 
 
-/* ================= Design moderne ================= */
+/* ================= Design « boutique de cartes » ================= */
 :root {
-  --pkborder:#e6e8f0;
-  --shadow:0 1px 2px rgba(20,24,40,.05), 0 12px 32px rgba(20,24,40,.08);
+  --bg:#f3ede1; --surface:#fffdf7; --text:#23233a; --muted:#767790; --line:#e6ddc9;
+  --accent:#e3350d; --accent-soft:#ffe7d8; --accent-contrast:#fff; --pkborder:#e6ddc9;
+  --down:#15884d; --down-soft:#e2f6e9; --up:#c2410c; --up-soft:#ffeede;
+  --gold:#e6a800; --shadow:0 2px 6px rgba(60,40,10,.06), 0 14px 34px rgba(60,40,10,.10);
 }
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) { --pkborder:#262b36; --shadow:0 1px 2px rgba(0,0,0,.35), 0 14px 36px rgba(0,0,0,.4); }
+  :root:not([data-theme="light"]) {
+    --bg:#14172a; --surface:#1e2237; --text:#f3f4fb; --muted:#9aa2c5; --line:#2e3457;
+    --accent:#ff4b3a; --accent-soft:rgba(255,75,58,.16); --accent-contrast:#fff; --pkborder:#2e3457;
+    --down:#3ddc84; --down-soft:rgba(61,220,132,.14); --up:#ffb020; --up-soft:rgba(255,176,32,.14);
+    --gold:#ffcb05; --shadow:0 6px 16px rgba(0,0,0,.35), 0 22px 48px rgba(0,0,0,.28);
+  }
 }
 html[data-theme="light"] {
-  --bg:#f5f6fa; --surface:#ffffff; --text:#1a1d26; --muted:#69707f; --line:#e6e8f0;
-  --accent:#e3350d; --accent-soft:#fdeadf; --accent-contrast:#ffffff; --pkborder:#e6e8f0;
-  --gold:#f0a500; --shadow:0 1px 2px rgba(20,24,40,.05), 0 12px 32px rgba(20,24,40,.08);
+  --bg:#f3ede1; --surface:#fffdf7; --text:#23233a; --muted:#767790; --line:#e6ddc9;
+  --accent:#e3350d; --accent-soft:#ffe7d8; --accent-contrast:#fff; --pkborder:#e6ddc9;
+  --gold:#e6a800; --shadow:0 2px 6px rgba(60,40,10,.06), 0 14px 34px rgba(60,40,10,.10);
 }
-html[data-theme="dark"] { --pkborder:#262b36; --shadow:0 1px 2px rgba(0,0,0,.35), 0 14px 36px rgba(0,0,0,.4); }
-
-/* --- finie la police pixel : typographie lisse et moderne --- */
-h1, h2, .brand, .eyebrow, .price, nav button, .badge, .kpi b, .btn, .chip, .stats, .stats b {
-  font-family:system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+html[data-theme="dark"] {
+  --bg:#14172a; --surface:#1e2237; --text:#f3f4fb; --muted:#9aa2c5; --line:#2e3457;
+  --accent:#ff4b3a; --accent-soft:rgba(255,75,58,.16); --accent-contrast:#fff; --pkborder:#2e3457;
+  --down:#3ddc84; --down-soft:rgba(61,220,132,.14); --up:#ffb020; --up-soft:rgba(255,176,32,.14);
+  --gold:#ffcb05; --shadow:0 6px 16px rgba(0,0,0,.35), 0 22px 48px rgba(0,0,0,.28);
 }
-h1 { font-size:1.8rem; line-height:1.15; letter-spacing:-.03em; }
-h2 { font-size:1.05rem; line-height:1.35; letter-spacing:-.01em; }
-.eyebrow { font-size:.68rem; letter-spacing:.15em; font-weight:750; }
-.brand { font-size:1.08rem; font-weight:800; letter-spacing:-.02em; }
-nav button { font-size:.88rem; padding:8px 14px; line-height:1.2; font-weight:600; border-radius:10px; }
-.price { font-size:1.25rem; font-weight:800; letter-spacing:-.02em; }
-.badge { font-size:.74rem; font-weight:700; padding:4px 10px; }
-.btn { font-size:.88rem; line-height:1.2; font-weight:650; }
-.chip { font-size:.84rem; }
-.stats { font-size:.84rem; } .stats b { font-size:.9rem; }
-.kpi b { font-size:.95rem; letter-spacing:-.01em; }
 
-/* --- bordures fines, coins arrondis, ombres douces --- */
-.card, .row, .modal, .box, .banner, .empty, .pk, .mon, .chip, .seg, nav, .kpi, .chat {
+/* --- fond à pois façon papier d'impression de cartes + lueurs d'ambiance --- */
+body {
+  background:
+    radial-gradient(rgba(227,53,13,.07) 1.2px, transparent 1.4px),
+    radial-gradient(rgba(59,76,202,.06) 1.2px, transparent 1.4px),
+    radial-gradient(ellipse at 88% -10%, rgba(255,203,5,.14), transparent 30rem),
+    radial-gradient(ellipse at -5% 0%, rgba(227,53,13,.11), transparent 36rem),
+    var(--bg);
+  background-size:26px 26px, 26px 26px, auto, auto, auto;
+  background-position:0 0, 13px 13px, 0 0, 0 0, 0 0;
+}
+
+/* --- typographie « collector » : Baloo 2 --- */
+h1, h2, .brand, .eyebrow, nav button, .badge, .btn, .price, .kpi b, .stats b, .chip {
+  font-family:'Baloo 2', system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+h1 { font-size:2.05rem; line-height:1.12; letter-spacing:-.02em; }
+h2 { font-size:1.12rem; line-height:1.3; }
+.eyebrow { font-size:.72rem; letter-spacing:.14em; font-weight:800; color:var(--accent); }
+.brand { font-size:1.16rem; font-weight:800; }
+nav button { font-size:.9rem; padding:8px 15px; border-radius:12px; font-weight:700; }
+.price { font-size:1.2rem; font-weight:800; letter-spacing:-.01em; }
+.badge { font-size:.76rem; font-weight:800; padding:4px 11px; }
+.btn { font-size:.9rem; font-weight:700; }
+.chip { font-size:.86rem; font-weight:700; }
+.stats { font-size:.84rem; } .stats b { font-size:.92rem; }
+.kpi b { font-size:1.02rem; }
+.kpi span { font-weight:600; }
+
+/* --- cartes façon cartes à collectionner : liseré doré/rouge en dégradé --- */
+.card, .row, .modal, .box, .banner, .empty, .pk, .mon, .kpi, .chat {
   border:1px solid var(--line);
   border-radius:16px;
   box-shadow:var(--shadow);
+  position:relative;
 }
-input, select, button.btn { border:1px solid var(--line); border-radius:12px; }
+.card::before {
+  content:""; position:absolute; inset:-1px; border-radius:17px; padding:2px; pointer-events:none;
+  background:linear-gradient(140deg, var(--gold), var(--accent) 45%, transparent 78%);
+  -webkit-mask:linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite:xor; mask-composite:exclude;
+  opacity:.55; transition:opacity .18s;
+}
+.card:hover::before { opacity:1; }
+.card:hover { transform:translateY(-4px); }
+
+/* --- prix façon étiquette --- */
+.card .price {
+  display:inline-block; align-self:flex-start;
+  background:var(--accent-soft); color:var(--accent);
+  padding:3px 11px; border-radius:10px;
+}
+
+/* --- boutons : bonbons rouges bien dodus --- */
+input, select, button.btn { border:1px solid var(--line); border-radius:13px; font-weight:600; }
 button.primary {
-  background:linear-gradient(135deg, #e3350d, #ff6a3d);
-  color:#fff; border-color:transparent;
-  box-shadow:0 6px 18px rgba(227,53,13,.3);
+  background:linear-gradient(135deg, #ff4b3a, #e3350d 60%, #c92c05);
+  color:#fff; border-color:transparent; border-radius:13px;
+  box-shadow:0 4px 0 rgba(140,25,0,.4), 0 12px 26px rgba(227,53,13,.35);
 }
-button.primary:hover { filter:brightness(1.05); }
+button.primary:hover { transform:translateY(-2px); box-shadow:0 6px 0 rgba(140,25,0,.4), 0 16px 30px rgba(227,53,13,.4); }
+button.btn { transition:transform .15s, box-shadow .15s; }
+button.btn:hover { transform:translateY(-1px); }
+
+/* --- bannière d'accueil : sachet de cartes ouvert --- */
+.hero {
+  border:none; border-radius:22px; position:relative; overflow:hidden;
+  background:
+    radial-gradient(circle at 84% 22%, rgba(255,203,5,.35), transparent 42%),
+    radial-gradient(circle at 8px 8px, rgba(255,255,255,.08) 1.4px, transparent 1.5px),
+    linear-gradient(120deg, #8f1500, #e3350d 48%, #ff7a3d);
+  background-size:auto, 22px 22px, auto;
+  box-shadow:0 22px 54px rgba(200,40,0,.35);
+}
+.hero h2 { text-shadow:0 2px 0 rgba(90,20,0,.4); font-size:1.55rem; }
+.hero p { font-size:.96rem; }
+.hero .btn { background:#fff; color:#c62a00; border-color:#fff; box-shadow:0 4px 0 rgba(90,20,0,.25); }
+.hero .btn:hover { background:#fff3d6; transform:translateY(-2px); }
+
+/* --- navigation : pilule active en dégradé rouge --- */
+nav { background:transparent; border:none; box-shadow:none; }
+nav button.on {
+  background:linear-gradient(135deg, #ff4b3a, #e3350d);
+  color:#fff; box-shadow:0 4px 14px rgba(227,53,13,.45);
+}
+nav button.on { border-radius:12px; }
+
+/* --- badges « autocollants » légèrement inclinés --- */
+.badge { transform:skew(-5deg); }
+.badge * { transform:skew(5deg); }
+
+/* --- liens d'achat : petites gommettes --- */
+.buy a { border:1.5px solid var(--line); border-radius:99px; font-size:.72rem; font-weight:700; background:var(--surface); }
+.buy a:hover { background:var(--accent-soft); color:var(--accent); border-color:var(--accent); transform:translateY(-1px); }
+.chips button { border:1.5px solid var(--line); border-radius:99px; font-size:.8rem; font-weight:700; }
+.chips button:hover { background:var(--accent-soft); color:var(--accent); border-color:var(--accent); }
+
+/* --- série ; grandes images arrondies --- */
 .modal .head img, .card img.thumb {
   border:1px solid var(--line); border-radius:12px;
-  background:linear-gradient(160deg,#fafbfd,#eef0f6);
+  background:linear-gradient(160deg, #fdf8ea, #efe6d2);
+}
+html[data-theme="dark"] .modal .head img, html[data-theme="dark"] .card img.thumb {
+  background:linear-gradient(160deg, #262b45, #1b1f33);
 }
 
-/* --- bannière d'accueil moderne --- */
-.hero {
-  border:none; border-radius:20px;
-  background:linear-gradient(120deg, #e3350d 0%, #ff5c2b 55%, #ff9e2b 100%);
-  box-shadow:0 18px 44px rgba(227,53,13,.28);
-}
-.hero h2 { text-shadow:none; font-size:1.45rem; }
-.hero p { font-size:.95rem; }
-.hero .btn { background:#fff; color:#e3350d; border-color:#fff; box-shadow:0 4px 14px rgba(0,0,0,.12); }
-.hero .btn:hover { background:#ffe9d9; }
-
-/* --- boutons et liens plus doux --- */
-.buy a { border:1px solid var(--line); border-radius:99px; font-size:.72rem; background:var(--surface); }
-.buy a:hover { background:var(--accent-soft); color:var(--accent); }
-.chips button { border:1px solid var(--line); border-radius:99px; font-size:.78rem; }
-.chips button:hover { background:var(--accent-soft); color:var(--accent); }
-.msg.bot { border:1px solid var(--line); }
-.msg.me { border:1px solid transparent; }
-.toast { border-radius:14px; }
+/* --- finitions : sélection rouge, barre de défilement, ball qui scintille --- */
+::selection { background:rgba(227,53,13,.28); }
+::-webkit-scrollbar { width:11px; height:11px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:var(--line); border-radius:8px; }
+::-webkit-scrollbar-thumb:hover { background:var(--muted); }
+.brand .ball { transition:transform .5s; }
+.brand:hover .ball { transform:rotate(360deg); }
+.msg.bot { border:1.5px solid var(--line); }
+.msg.me { border:1.5px solid transparent; border-color:var(--accent); }
+.toast { border-radius:16px; }
 
 /* --- mini-sélecteur de période sur chaque carte --- */
 .seg.mini { margin-top:8px; }
