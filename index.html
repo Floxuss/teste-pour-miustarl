@@ -1061,7 +1061,7 @@ const LANG_LABEL = { fr:'Français', en:'English', de:'Deutsch', es:'Español', 
 let LANG = lsGet('lang', 'fr');
 const ART = id => `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`;
 const IMGERR = `onerror="this.style.opacity='.15'"`;
-let ALLNAMES = null, BYID = {};
+let ALLNAMES = null, BYID = {}, NAME_EN2ID = {}, NAME_FR2EN = {};
 
 /* Nom d'un Pokémon dans la langue choisie (retombe sur l'anglais) */
 function nameOf(f) {
@@ -1071,6 +1071,26 @@ function nameOf(f) {
 function allNamesTitle(f) {            // survol : le nom dans toutes les langues
   const n = f.id && BYID[f.id]; if (!n) return f.name;
   return LANG_LIST.filter(l => n[l]).map(l => `${LANG_LABEL[l]} : ${n[l]}`).join('\n');
+}
+
+/* Traduction des noms de cartes : « Charizard » → « Dracaufeu » (selon la langue affichée) */
+function cname(en) {
+  if (!en) return en;
+  const words = String(en).split(' ');
+  for (let n = words.length; n >= 1; n--) {
+    const id = NAME_EN2ID[words.slice(0, n).join(' ').toLowerCase()];
+    if (id && BYID[id]) {
+      const tr = BYID[id][LANG] || BYID[id].en || words.slice(0, n).join(' ');
+      return [tr, ...words.slice(n)].join(' ');
+    }
+  }
+  return en;
+}
+/* Traduction inverse pour la recherche : « Dracaufeu » → « Charizard » */
+function frWords(text) {
+  const t = String(text ?? '');
+  if (!Object.keys(NAME_FR2EN).length) return t;
+  return t.replace(/[A-Za-zÀ-ÿ'’-]+/g, w => NAME_FR2EN[norm(w)] || w);
 }
 
 function renderFavBar() {
@@ -1109,7 +1129,14 @@ async function loadAllNames() {
     }
     a.sort((x, y) => x.id - y.id); lsSet('allNames2', a);
   }
-  a.forEach(p => BYID[p.id] = p.n);
+  a.forEach(p => {
+    BYID[p.id] = p.n;
+    if (p.n.en) NAME_EN2ID[p.n.en.toLowerCase()] = p.id;
+    if (p.n.fr) NAME_FR2EN[norm(p.n.fr)] = p.n.en;
+    if (p.n.de) NAME_FR2EN[norm(p.n.de)] = p.n.en;
+    if (p.n.es) NAME_FR2EN[norm(p.n.es)] = p.n.en;
+    if (p.n.it) NAME_FR2EN[norm(p.n.it)] = p.n.en;
+  });
   return ALLNAMES = a;
 }
 
@@ -1253,7 +1280,7 @@ function renderTrend(pending = 0, failedAll = false) {
     const plabel = PERIOD === 365 ? '1 an' : PERIOD + ' j';
     return `<div class="card" data-id="${esc(c.tcg_id)}">
       <div class="top"><span class="thumbwrap"><img class="thumb" loading="lazy" src="${esc(c.image)}" alt=""></span>
-        <div><div class="name">${esc(c.name)}</div><div class="muted small">${esc(c.set_name)} · #${esc(c.number)}</div>
+        <div><div class="name">${esc(cname(c.name))}</div><div class="muted small">${esc(c.set_name)} · #${esc(c.number)}</div>
         <div class="price">${eur(c.prices.trendPrice)}</div>
         <span class="badge ${cls}">${pct(d)} / ${plabel}</span></div></div>
       ${perCardChart(c)}
@@ -1306,7 +1333,7 @@ function renderModal(c) {
   $('#modal').innerHTML = `
     <div class="head">
       <img src="${esc(c.image)}" alt="">
-      <div style="flex:1"><h3>${esc(c.name)}</h3><div class="muted">${esc(c.set_name)} · #${esc(c.number)}</div>
+      <div style="flex:1"><h3>${esc(cname(c.name))}</h3><div class="muted">${esc(c.set_name)} · #${esc(c.number)}</div>
         <div class="kpis">${kpis}</div></div>
       <button class="close" aria-label="Fermer" onclick="closeModal()">×</button>
     </div>
@@ -1358,7 +1385,7 @@ $('#searchForm').addEventListener('submit', async e => {
   const box = $('#searchGrid');
   box.innerHTML = '<div class="empty" style="grid-column:1/-1">Recherche…</div>';
   try {
-    const res = await searchCards($('#q').value);
+    const res = await searchCards(frWords($('#q').value));
     if (!res.length) { box.innerHTML = '<div class="empty" style="grid-column:1/-1">Aucun résultat.</div>'; return; }
     box.innerHTML = res.map(c => `<div class="card" data-id="${esc(c.tcg_id)}">
       <div class="top"><span class="thumbwrap"><img class="thumb" loading="lazy" src="${esc(c.image)}" alt=""></span>
@@ -1380,7 +1407,7 @@ function renderList() {
     const hit = r.last != null && r.last <= r.target;
     return `<div class="row">
       <img src="${esc(r.image)}" alt="">
-      <div><div class="name" style="font-weight:650">${esc(r.name)} <span class="muted small">${esc(r.set_name)} · #${esc(r.number)}</span></div>
+      <div><div class="name" style="font-weight:650">${esc(cname(r.name))} <span class="muted small">${esc(r.set_name)} · #${esc(r.number)}</span></div>
         <div><b style="font-variant-numeric:tabular-nums">${eur(r.last)}</b> <span class="muted small">· seuil ${eur(r.target)}</span>${r.rise ? ` <span class="muted small">· hausse si ≥ ${eur(r.rise)}</span>` : ''}${r.ebay ? ` <span class="muted small">· eBay ${eur(r.ebay.median)}</span>` : ''}${r.bought ? ` <span class="muted small">· achetée ${eur(r.bought)}</span>` : ''}
           <span class="badge ${hit ? 'hit' : 'flat'}">${hit ? 'Seuil atteint' : 'En attente'}</span></div>
         <div class="muted small">${esc(METRICS[r.metric])} · vérifié : ${esc(r.checked || '—')}</div></div>
@@ -1421,7 +1448,7 @@ function renderWallet() {
     const cls = pl == null ? 'flat' : pl >= 0 ? 'win' : 'lose';
     return `<div class="row">
       <img src="${esc(w.image)}" alt="">
-      <div><div class="name" style="font-weight:650">${esc(w.name)} <span class="muted small">${esc(w.set_name)} · #${esc(w.number)}</span></div>
+      <div><div class="name" style="font-weight:650">${esc(cname(w.name))} <span class="muted small">${esc(w.set_name)} · #${esc(w.number)}</span></div>
         <div><b>Achetée ${eur(w.bought)}</b> <span class="muted small">· maintenant ${eur(w.last)}</span>
           <span class="badge ${cls}">${pl == null ? '?' : (pl >= 0 ? '+' : '') + pl.toFixed(2) + ' €' + (plp != null ? ' (' + (plp >= 0 ? '+' : '') + plp + ' %)' : '')}</span></div>
         <div class="muted small">achetée le ${esc(w.boughtAt || '—')} · suivi sur ${esc(METRICS[w.metric])}</div></div>
@@ -1733,7 +1760,7 @@ function buzzCards(posts) {
 }
 function cardHtml(c, note) {
   const d = c.drop30 ?? 0, cls = d < -1 ? 'down' : d > 1 ? 'up' : 'flat';
-  return `<div class="card" data-id="${esc(c.tcg_id)}"><div class="top"><span class="thumbwrap"><img class="thumb" loading="lazy" src="${esc(c.image)}" alt=""></span><div><div class="name">${esc(c.name)}</div><div class="muted small">${esc(c.set_name)} · #${esc(c.number)}</div><div class="price">${eur(c.prices.trendPrice)}</div><span class="badge ${cls}">${pct(c.drop30)} / 30 j</span></div></div>${note ? `<div class="muted small">${note}</div>` : ''}<div class="buy">${buyLinksHtml(c)}</div></div>`;
+  return `<div class="card" data-id="${esc(c.tcg_id)}"><div class="top"><span class="thumbwrap"><img class="thumb" loading="lazy" src="${esc(c.image)}" alt=""></span><div><div class="name">${esc(cname(c.name))}</div><div class="muted small">${esc(c.set_name)} · #${esc(c.number)}</div><div class="price">${eur(c.prices.trendPrice)}</div><span class="badge ${cls}">${pct(c.drop30)} / 30 j</span></div></div>${note ? `<div class="muted small">${note}</div>` : ''}<div class="buy">${buyLinksHtml(c)}</div></div>`;
 }
 function bindGrid(sel, pool) {
   const g = $(sel); if (!g) return;
@@ -1783,7 +1810,7 @@ function addMsg(text, who) {
   return d;
 }
 function findCardIn(text) {
-  const q = norm(text);
+  const q = norm(frWords(text) + ' ' + text);
   let best = null;
   for (const c of [...WATCH, ...TREND]) {
     const n = norm(c.name);
@@ -1793,7 +1820,7 @@ function findCardIn(text) {
 }
 function cardLine(c) {
   const d = c.drop30 ?? 0, cls = d < -1 ? 'down' : d > 1 ? 'up' : 'flat';
-  return `• <b>${esc(c.name)}</b> (${esc(c.set_name)}) — ${eur(c.prices.trendPrice)} <span class="badge ${cls}">${pct(c.drop30)} / 30 j</span>`;
+  return `• <b>${esc(cname(c.name))}</b> (${esc(c.set_name)}) — ${eur(c.prices.trendPrice)} <span class="badge ${cls}">${pct(c.drop30)} / 30 j</span>`;
 }
 function localAnswer(raw) {
   const q = norm(raw);
@@ -1805,7 +1832,7 @@ function localAnswer(raw) {
   }
   if (q.includes('ma liste') || q.includes('suivi')) {
     if (!WATCH.length) return 'Ta liste est vide : cherche une carte dans « Cartes ciblées » ou ouvre-en une depuis les tendances.';
-    return 'Tes cartes suivies :\n' + WATCH.map(w => `• <b>${esc(w.name)}</b> — ${eur(w.last)} (seuil ${eur(w.target)})${w.ebay ? ' · eBay ' + eur(w.ebay.median) : ''}`).join('\n');
+    return 'Tes cartes suivies :\n' + WATCH.map(w => `• <b>${esc(cname(w.name))}</b> — ${eur(w.last)} (seuil ${eur(w.target)})${w.ebay ? ' · eBay ' + eur(w.ebay.median) : ''}`).join('\n');
   }
   if (q.includes('buzz') || q.includes('reddit')) {
     if (!BUZZ || !BUZZ.posts.length) return 'Je n\'ai pas encore de données Reddit : lance « Analyser Reddit + mes goûts » dans l\'onglet « Pour toi », puis redemande.';
@@ -1819,7 +1846,7 @@ function localAnswer(raw) {
     const pl = cur - inv;
     return '💰 Ton portefeuille :\n' + items.map(w => {
       const p = w.last != null ? w.last - w.bought : null;
-      return `• <b>${esc(w.name)}</b> — achetée ${eur(w.bought)}, maintenant ${eur(w.last)}${p != null ? ` (${p >= 0 ? '+' : ''}${p.toFixed(2)} €)` : ''}`;
+      return `• <b>${esc(cname(w.name))}</b> — achetée ${eur(w.bought)}, maintenant ${eur(w.last)}${p != null ? ` (${p >= 0 ? '+' : ''}${p.toFixed(2)} €)` : ''}`;
     }).join('\n') + `\n\nTotal : investi ${eur(inv)} · valeur ${eur(cur)} · ${pl >= 0 ? '+' : ''}${pl.toFixed(2)} €\nDétails dans l'onglet « Portefeuille ».`;
   }
   if (q.includes('baisse') || q.includes('occasion') || q.includes('deal')) {
@@ -1837,12 +1864,12 @@ function localAnswer(raw) {
   }
   if (q.includes('où acheter') || q.includes('ou acheter') || q.includes('acheter')) {
     const c = findCardIn(raw);
-    if (c) return `Pour acheter <b>${esc(c.name)}</b> (${eur(c.prices.trendPrice)}):\n${buyLinksHtml(c)}\n\nVraie moyenne multi-sources : ${eur(realAvg(c))}.`;
+    if (c) return `Pour acheter <b>${esc(cname(c.name))}</b> (${eur(c.prices.trendPrice)}):\n${buyLinksHtml(c)}\n\nVraie moyenne multi-sources : ${eur(realAvg(c))}.`;
     return 'Dis-moi le nom de la carte, ex : « où acheter Pikachu ? ».';
   }
   const c = findCardIn(raw);
   if (c) {
-    return `<b>${esc(c.name)}</b> (${esc(c.set_name)} · #${esc(c.number)})\nPrix tendance : ${eur(c.prices.trendPrice)}\n30 jours : ${pct(c.drop30)} · 7 jours : ${pct(c.drop7)}\nMoyenne multi-sources : ${eur(realAvg(c))}\n${buyLinksHtml(c)}\nOuvre la carte depuis « Tendances » pour le graphique et l'historique.`;
+    return `<b>${esc(cname(c.name))}</b> (${esc(c.set_name)} · #${esc(c.number)})\nPrix tendance : ${eur(c.prices.trendPrice)}\n30 jours : ${pct(c.drop30)} · 7 jours : ${pct(c.drop7)}\nMoyenne multi-sources : ${eur(realAvg(c))}\n${buyLinksHtml(c)}\nOuvre la carte depuis « Tendances » pour le graphique et l'historique.`;
   }
   return 'Je n\'ai pas compris 😅. Tape « aide » pour voir ce que je sais faire, ou le nom d\'une carte (ex : « prix de Pikachu »).';
 }
@@ -1885,7 +1912,7 @@ function huntRow({ t, best, med, n, market, deal }) {
   const tooGood = deal != null && deal > 55;
   return `<div class="row">
     <img src="${esc(t.image)}" alt="">
-    <div><div class="name" style="font-weight:650">${esc(t.name)} <span class="muted small">${esc(t.set_name)} · #${esc(t.number)}</span></div>
+    <div><div class="name" style="font-weight:650">${esc(cname(t.name))} <span class="muted small">${esc(t.set_name)} · #${esc(t.number)}</span></div>
       <div class="muted small">Marché multi-sources : <b>${eur(market)}</b>${med ? ` · médiane eBay : ${eur(med)} (${n} annonces)` : ''}</div>
       ${best ? `<div>Meilleure annonce eBay : <b>${eur(best.price)}</b> ${deal != null && !tooGood ? `<span class="badge ${deal > 2 ? 'down' : 'flat'}">${deal > 0 ? '-' : ''}${deal} % vs marché</span>` : ''}${(fakeHit || tooGood) ? ` <span class="badge up">⚠️ Suspect : ${fakeHit ? 'annonce douteuse' : 'prix trop bas pour être réel'} — arnaque possible</span>` : ''}<br><a class="small" href="${esc(best.url)}" target="_blank" rel="noopener">${esc((best.title || '').slice(0, 70))} ↗</a></div>`
              : `<div class="muted small">${EBAY_KEY ? 'Aucune annonce en euros trouvée.' : 'Ajoute ton App ID eBay (Cartes ciblées → Réglages) pour mesurer les annonces.'}</div>`}
@@ -1946,7 +1973,7 @@ function renderSetComp() {
     const pot = r.med > 0 ? (r.top[0].prices.trendPrice / r.med).toFixed(1) + 'x' : '—';
     const topRows = r.top.map((c, i) =>
       `<div class="row" style="grid-template-columns:44px 1fr auto;padding:8px;margin-bottom:6px"><img src="${esc(c.image)}" style="width:44px;height:60px" alt="">
-        <div><b class="small">${i + 1}. ${esc(c.name)}</b> <span class="muted small">${esc(c.set_name)} · #${esc(c.number)}</span></div>
+        <div><b class="small">${i + 1}. ${esc(cname(c.name))}</b> <span class="muted small">${esc(c.set_name)} · #${esc(c.number)}</span></div>
         <b>${eur(c.prices.trendPrice)}</b></div>`).join('');
     return `<div class="box"><h4>${esc(r.name)} <button class="btn danger" style="float:right" onclick="removeSetRow('${esc(r.setId)}')">Retirer</button></h4>
       <div class="kpis">
@@ -2030,7 +2057,7 @@ function liveStart(card) {
 function fillLiveSelect() {
   const sel = $('#liveCard'), cur = sel.value, seen = new Map();
   for (const c of [...WATCH, ...TREND, ...LIVE.extra]) if (c.tcg_id && !seen.has(c.tcg_id)) seen.set(c.tcg_id, c);
-  sel.innerHTML = '<option value="">— Choisir une carte —</option>' + [...seen.values()].map(c => `<option value="${esc(c.tcg_id)}">${esc(c.name)} — ${esc(c.set_name)} (${eur(c.prices?.trendPrice)})</option>`).join('');
+  sel.innerHTML = '<option value="">— Choisir une carte —</option>' + [...seen.values()].map(c => `<option value="${esc(c.tcg_id)}">${esc(cname(c.name))} — ${esc(c.set_name)} (${eur(c.prices?.trendPrice)})</option>`).join('');
   if (LIVE.card) sel.value = LIVE.card.tcg_id; else if (cur) sel.value = cur;
 }
 $('#liveCard').onchange = () => {
