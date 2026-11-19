@@ -539,6 +539,11 @@ button.primary:hover { filter:brightness(1.05); }
 .msg.bot { border:1px solid var(--line); }
 .msg.me { border:1px solid transparent; }
 .toast { border-radius:14px; }
+
+/* --- mini-sélecteur de période sur chaque carte --- */
+.seg.mini { margin-top:8px; }
+.seg.mini button { padding:5px 9px; font-size:.62rem; font-weight:650; }
+.seg.mini button.on { background:var(--accent-soft); color:var(--accent); }
 </style>
 </head>
 <body>
@@ -908,8 +913,10 @@ function chart(points, { w = 300, h = 84, big = false } = {}) {
     }
     pts.forEach((p, i) => { if (pts.length <= 10 || i % Math.ceil(pts.length / 8) === 0) extra += `<text class="ax" x="${X(i).toFixed(1)}" y="${h - 9}" text-anchor="middle">${esc(p.l)}</text>`; });
   }
-  const dots = (big || pts.length <= 6) ? pts.map((p, i) =>
-    `<circle class="dot" cx="${X(i).toFixed(1)}" cy="${Y(p.v).toFixed(1)}" r="${big ? 4 : 2.5}"><title>${esc(p.l)} : ${eur(p.v)}</title></circle>`).join('') : '';
+  const dots = (big || pts.length <= 6) ? pts.map((p, i) => {
+    const hit = big ? `<circle cx="${X(i).toFixed(1)}" cy="${Y(p.v).toFixed(1)}" r="11" fill="transparent"><title>${esc(p.l)} : ${eur(p.v)}</title></circle>` : '';
+    return `<circle class="dot" cx="${X(i).toFixed(1)}" cy="${Y(p.v).toFixed(1)}" r="${big ? 4 : 2.5}"><title>${esc(p.l)} : ${eur(p.v)}</title></circle>${hit}`;
+  }).join('') : '';
   return `<svg class="chart ${cls}" viewBox="0 0 ${w} ${h}" role="img" aria-label="Évolution du prix : ${cls === 'down' ? 'baisse' : cls === 'up' ? 'hausse' : 'stable'}">${extra}<path class="area" d="${area}"/><path class="line" d="${line}"/>${dots}</svg>`;
 }
 const avgSeries = p => [
@@ -1071,6 +1078,7 @@ async function openPicker() {
 
 /* =====================================================  Tendances  */
 let TREND = [], PERIOD = 30;
+const PERCARD = {};                      // graphique choisi par carte : '24' | '7' | '30' | '365'
 let TC = lsGet('trendCache2', {});       // cache par Pokémon : { nom: { ts, cards } }
 const TREND_TTL = 60 * 60 * 1000;        // 1 h
 document.querySelectorAll('#period button').forEach(b => b.onclick = () => {
@@ -1127,6 +1135,19 @@ async function loadTrend(force = false) {
 }
 $('#btnRefresh').onclick = () => loadTrend(true);
 
+function perCardChart(c) {               // graphique interactif de la carte, selon la période cliquée
+  const mode = PERCARD[c.tcg_id] || (PERIOD === 365 ? '365' : '30');
+  let pts;
+  if (mode === '24') pts = [{ l:'Moy 24 h', v:c.prices.avg1 }, { l:'Maintenant', v:c.prices.trendPrice }];
+  else if (mode === '7') pts = [{ l:'Moy 7 j', v:c.prices.avg7 }, { l:'Moy 24 h', v:c.prices.avg1 }, { l:'Maintenant', v:c.prices.trendPrice }];
+  else if (mode === '365') pts = histOf(c.tcg_id, 365);
+  else pts = avgSeries(c.prices);
+  const seg = `<div class="seg mini">${[['24','24 h'],['7','7 j'],['30','30 j'],['365','1 an']]
+    .map(([m, l]) => `<button data-pc="${m}" data-id="${esc(c.tcg_id)}" class="${mode === m ? 'on' : ''}">${l}</button>`).join('')}</div>`;
+  let html = seg + chart(pts, mode === '365' || mode === '30' ? {} : { h:70 });
+  if (mode === '365' && pts.length < 3) html += '<div class="muted small" style="margin-top:4px">L\'historique 1 an se remplit au fil des jours.</div>';
+  return html;
+}
 function renderTrend(pending = 0, failedAll = false) {
   const grid = $('#trendGrid');
   if (!FAVS.length) {
@@ -1159,11 +1180,12 @@ function renderTrend(pending = 0, failedAll = false) {
         <div><div class="name">${esc(c.name)}</div><div class="muted small">${esc(c.set_name)} · #${esc(c.number)}</div>
         <div class="price">${eur(c.prices.trendPrice)}</div>
         <span class="badge ${cls}">${pct(d)} / ${plabel}</span></div></div>
-      ${chart(PERIOD === 365 ? histOf(c.tcg_id, 365) : avgSeries(c.prices))}
+      ${perCardChart(c)}
       <div class="buy">${buyLinksHtml(c)}</div>
     </div>`;
   }).join('');
   grid.querySelectorAll('.card').forEach(el => el.onclick = () => openCard(el.dataset.id, TREND.find(c => c.tcg_id === el.dataset.id)));
+  grid.querySelectorAll('[data-pc]').forEach(b => b.onclick = e => { e.stopPropagation(); PERCARD[b.dataset.id] = b.dataset.pc; renderTrend(); });
   attachTilt(grid);
 }
 function useSuggestion() {
